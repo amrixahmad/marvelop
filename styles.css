@@ -625,6 +625,18 @@ select:focus {
   font-size: 0.9rem;
 }
 
+.business-details {
+  display: grid;
+  gap: 0.18rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.business-details p {
+  margin: 0;
+}
+
 .reveal {
   opacity: 0;
   transform: translateY(14px);
