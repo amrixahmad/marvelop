@@ -59,7 +59,7 @@ if (form) {
 
       if (typeof window.fbq === "function") {
         window.fbq("track", "Lead", {
-          content_name: "Free Growth Audit",
+          content_name: "Meta Ads Growth Review",
           status: "submitted"
         });
       }
