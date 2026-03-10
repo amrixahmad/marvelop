@@ -1,9 +1,30 @@
 const form = document.getElementById("auditForm");
 const statusNode = document.getElementById("formStatus");
 const yearNode = document.getElementById("year");
+const thankYouCompanyNode = document.getElementById("thankYouCompany");
+const thankYouBudgetNode = document.getElementById("thankYouBudget");
 
 if (yearNode) {
   yearNode.textContent = new Date().getFullYear();
+}
+
+if (thankYouCompanyNode || thankYouBudgetNode) {
+  try {
+    const storedLead = sessionStorage.getItem("marvelopLead");
+
+    if (storedLead) {
+      const lead = JSON.parse(storedLead);
+
+      if (thankYouCompanyNode && lead.company) {
+        thankYouCompanyNode.textContent = lead.company;
+      }
+
+      if (thankYouBudgetNode && lead.budget) {
+        thankYouBudgetNode.textContent = lead.budget;
+      }
+    }
+  } catch (error) {
+  }
 }
 
 const revealItems = document.querySelectorAll(".reveal");
@@ -29,8 +50,10 @@ if (form) {
     statusNode.className = "form-status";
 
     const formData = new FormData(form);
+    const company = String(formData.get("company") || "").trim();
     const email = String(formData.get("email") || "").trim();
     const phone = String(formData.get("phone") || "").trim();
+    const budget = String(formData.get("budget") || "").trim();
     const website = String(formData.get("website") || "").trim();
 
     if (website) {
@@ -39,8 +62,8 @@ if (form) {
       return;
     }
 
-    if (!email || !phone) {
-      statusNode.textContent = "Please provide both email and phone number.";
+    if (!company || !email || !phone || !budget) {
+      statusNode.textContent = "Please complete all form fields before continuing.";
       statusNode.classList.add("error");
       return;
     }
@@ -64,9 +87,22 @@ if (form) {
         });
       }
 
-      statusNode.textContent = "Thanks! We received your details and will contact you shortly.";
+      sessionStorage.setItem(
+        "marvelopLead",
+        JSON.stringify({
+          company,
+          email,
+          phone,
+          budget
+        })
+      );
+
+      statusNode.textContent = "Thanks! Taking you to the next step...";
       statusNode.classList.add("success");
       form.reset();
+      window.setTimeout(() => {
+        window.location.href = "thank-you.html";
+      }, 450);
     } catch (error) {
       statusNode.textContent = "Something went wrong. Please try again.";
       statusNode.classList.add("error");

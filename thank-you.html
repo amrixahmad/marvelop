@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thank You | Marvelop</title>
+    <meta
+      name="description"
+      content="Thanks for requesting a Meta Ads Growth Review from Marvelop. Review the next steps and optionally book a strategy call."
+    />
+    <meta property="og:title" content="Thank You | Marvelop" />
+    <meta
+      property="og:description"
+      content="Your Meta Ads Growth Review request has been received. See what happens next and optionally book a strategy call."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://example.com/thank-you.html" />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?auto=format&fit=crop&w=1200&q=80" />
+    <link rel="icon" type="image/png" href="marvelop logo 360x80.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+
+    <script>
+      !(function (f, b, e, v, n, t, s) {
+        if (f.fbq) return;
+        n = f.fbq = function () {
+          n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+        };
+        if (!f._fbq) f._fbq = n;
+        n.push = n;
+        n.loaded = true;
+        n.version = "2.0";
+        n.queue = [];
+        t = b.createElement(e);
+        t.async = true;
+        t.src = v;
+        s = b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t, s);
+      })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
+      fbq("init", "YOUR_PIXEL_ID");
+      fbq("track", "PageView");
+      fbq("track", "ViewContent", { content_name: "Meta Ads Review Thank You" });
+    </script>
+    <noscript>
+      <img
+        height="1"
+        width="1"
+        style="display: none"
+        alt=""
+        src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"
+      />
+    </noscript>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav-wrap">
+        <div class="brand" aria-label="Marvelop">
+          <img class="brand-logo" src="marvelop logo 360x80.png" alt="Marvelop" />
+        </div>
+        <a class="btn btn-outline" href="index.html">Back to Home</a>
+      </div>
+    </header>
+
+    <main class="thank-you-main">
+      <div class="container thank-you-shell">
+        <section class="thank-you-card reveal">
+          <p class="eyebrow">Request Received</p>
+          <h1>Thanks — your review request is in.</h1>
+          <p class="lead">
+            We have received your details and will review your funnel fit before reaching out with next-step recommendations.
+          </p>
+          <div class="thank-you-highlight">
+            <p><strong>Company:</strong> <span id="thankYouCompany">Your company</span></p>
+            <p><strong>Reported budget range:</strong> <span id="thankYouBudget">Pending confirmation</span></p>
+          </div>
+        </section>
+
+        <section class="thank-you-next reveal">
+          <h2>What happens next</h2>
+          <ol class="thank-you-steps">
+            <li>We review your submitted details and assess whether there is a strong fit.</li>
+            <li>If there is a fit, we will contact you by WhatsApp or email within 1 business day.</li>
+            <li>If you want to move faster, you can optionally book a strategy call now.</li>
+          </ol>
+          <div class="thank-you-actions">
+            <a class="btn btn-primary" href="https://calendly.com/your-booking-link" target="_blank" rel="noreferrer">Book a Strategy Call</a>
+            <a class="btn btn-outline" href="index.html#case-study">Review the Case Study Again</a>
+          </div>
+          <p class="thank-you-note">This booking step is optional. If you prefer, simply wait for our follow-up.</p>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-wrap">
+        <div>
+          <h2>Better Lead Quality Starts With a Better Funnel</h2>
+          <a class="btn btn-primary" href="index.html#lead-form">Submit Another Request</a>
+        </div>
+        <p class="fine-print">© <span id="year"></span> Marvelop. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <script src="main.js"></script>
+  </body>
+</html>
