@@ -76,9 +76,17 @@ if (form) {
     }
 
     try {
-      // Replace this with your backend/CRM endpoint when ready.
-      // Kept local and lightweight for now.
-      await new Promise((resolve) => setTimeout(resolve, 350));
+      const response = await fetch(form.action, {
+        method: "POST",
+        body: formData,
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Submission failed");
+      }
 
       if (typeof window.fbq === "function") {
         window.fbq("track", "Lead", {
