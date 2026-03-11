@@ -88,12 +88,13 @@ if (form) {
         throw new Error("Submission failed");
       }
 
-      if (typeof window.fbq === "function") {
-        window.fbq("track", "Lead", {
-          content_name: "Meta Ads Growth Review",
-          status: "submitted"
-        });
-      }
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "lead_form_success",
+        form_name: "marvelop_growth_review",
+        company,
+        budget
+      });
 
       sessionStorage.setItem(
         "marvelopLead",
