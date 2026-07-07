@@ -228,13 +228,13 @@
           </div>
 
           <form class="lead-form" id="auditForm" action="https://formspree.io/f/xpqebzrq" method="POST" novalidate>
-            <label for="company">Company Name</label>
-            <input type="text" id="company" name="company" placeholder="Your company" required />
+            <label for="name">Your Name</label>
+            <input type="text" id="name" name="name" placeholder="Your full name" required />
 
-            <label for="email">Work Email</label>
+            <label for="email">Email you use for work</label>
             <input type="email" id="email" name="email" placeholder="you@company.com" required />
 
-            <label for="phone">Phone Number</label>
+            <label for="phone">Phone number</label>
             <input
               type="tel"
               id="phone"
@@ -243,6 +243,24 @@
               required
               pattern="^\\+?[0-9\\s-]{8,20}$"
             />
+
+            <label for="company">Your Company Name</label>
+            <input type="text" id="company" name="company" placeholder="Your company name" required />
+
+            <label for="comp_website">Company website (if any)</label>
+            <input type="url" id="comp_website" name="comp_website" placeholder="https://example.com" />
+
+            <label for="product_service">Product/Service</label>
+            <input type="text" id="product_service" name="product_service" placeholder="What product or service do you sell?" required />
+
+            <label for="struggle">What is your main struggle with your current ads?</label>
+            <select id="struggle" name="struggle" required>
+              <option value="" selected disabled>Select your main struggle</option>
+              <option value="Too expensive/CPL too high">Too expensive/CPL too high</option>
+              <option value="Poor lead quality">Poor lead quality</option>
+              <option value="Campaign quality drops when I increase spend">Campaign quality drops when I increase spend</option>
+              <option value="Don't know why they aren't working">Don't know why they aren't working</option>
+            </select>
 
             <label for="budget">Monthly Ad Budget</label>
             <select id="budget" name="budget" required>
@@ -253,7 +271,7 @@
               <option value="RM50,000+">RM50,000+</option>
             </select>
 
-            <input type="text" name="website" id="website" class="honeypot" tabindex="-1" autocomplete="off" />
+            <input type="text" name="hp_field" id="hp_field" class="honeypot" tabindex="-1" autocomplete="off" />
 
             <button type="submit" class="btn btn-primary">Request My Free Review</button>
             <p class="form-note">By submitting, you agree to be contacted regarding your Meta ads growth strategy and you will be taken to the next step.</p>

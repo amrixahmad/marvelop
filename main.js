@@ -50,19 +50,23 @@ if (form) {
     statusNode.className = "form-status";
 
     const formData = new FormData(form);
-    const company = String(formData.get("company") || "").trim();
+    const name = String(formData.get("name") || "").trim();
     const email = String(formData.get("email") || "").trim();
     const phone = String(formData.get("phone") || "").trim();
+    const company = String(formData.get("company") || "").trim();
+    const compWebsite = String(formData.get("comp_website") || "").trim();
+    const productService = String(formData.get("product_service") || "").trim();
+    const struggle = String(formData.get("struggle") || "").trim();
     const budget = String(formData.get("budget") || "").trim();
-    const website = String(formData.get("website") || "").trim();
+    const hpField = String(formData.get("hp_field") || "").trim();
 
-    if (website) {
+    if (hpField) {
       statusNode.textContent = "Submission blocked.";
       statusNode.classList.add("error");
       return;
     }
 
-    if (!company || !email || !phone || !budget) {
+    if (!name || !email || !phone || !company || !productService || !struggle || !budget) {
       statusNode.textContent = "Please complete all form fields before continuing.";
       statusNode.classList.add("error");
       return;
@@ -92,16 +96,26 @@ if (form) {
       window.dataLayer.push({
         event: "lead_form_success",
         form_name: "marvelop_growth_review",
+        name,
+        email,
+        phone,
         company,
+        compWebsite,
+        productService,
+        struggle,
         budget
       });
 
       sessionStorage.setItem(
         "marvelopLead",
         JSON.stringify({
-          company,
+          name,
           email,
           phone,
+          company,
+          compWebsite,
+          productService,
+          struggle,
           budget
         })
       );
