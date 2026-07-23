@@ -30,6 +30,11 @@ p + p { margin-top: 14px; }
 body.page-thanks h1 { font-size: clamp(1.8rem, 6vw, 2.6rem); line-height: 1.15; }
 body.page-thanks h2 { font-size: 1.35rem; margin-bottom: 12px; }
 
+/* ===== Hero H1 Emphasis ===== */
+.h1-big { font-size: 1.4em; font-weight: 800; }
+.h1-waste { color: var(--red); text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 4px; }
+.h1-fix { text-transform: uppercase; font-size: 1.15em; font-weight: 800; letter-spacing: 0.02em; }
+
 /* ===== Reveal Animation ===== */
 .reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.5s ease, transform 0.5s ease; }
 .reveal.visible { opacity: 1; transform: none; }
