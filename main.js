@@ -1,26 +1,22 @@
-const form = document.getElementById("auditForm");
+const form = document.getElementById("guideForm");
 const statusNode = document.getElementById("formStatus");
+const submitBtn = document.getElementById("submitBtn");
 const yearNode = document.getElementById("year");
-const thankYouCompanyNode = document.getElementById("thankYouCompany");
-const thankYouBudgetNode = document.getElementById("thankYouBudget");
+const thankYouEmailNode = document.getElementById("thankYouEmail");
 
 if (yearNode) {
   yearNode.textContent = new Date().getFullYear();
 }
 
-if (thankYouCompanyNode || thankYouBudgetNode) {
+if (thankYouEmailNode) {
   try {
     const storedLead = sessionStorage.getItem("marvelopLead");
 
     if (storedLead) {
       const lead = JSON.parse(storedLead);
 
-      if (thankYouCompanyNode && lead.company) {
-        thankYouCompanyNode.textContent = lead.company;
-      }
-
-      if (thankYouBudgetNode && lead.budget) {
-        thankYouBudgetNode.textContent = lead.budget;
+      if (lead.email) {
+        thankYouEmailNode.textContent = lead.email;
       }
     }
   } catch (error) {
@@ -53,11 +49,6 @@ if (form) {
     const name = String(formData.get("name") || "").trim();
     const email = String(formData.get("email") || "").trim();
     const phone = String(formData.get("phone") || "").trim();
-    const company = String(formData.get("company") || "").trim();
-    const compWebsite = String(formData.get("comp_website") || "").trim();
-    const productService = String(formData.get("product_service") || "").trim();
-    const struggle = String(formData.get("struggle") || "").trim();
-    const budget = String(formData.get("budget") || "").trim();
     const hpField = String(formData.get("hp_field") || "").trim();
 
     if (hpField) {
@@ -66,18 +57,27 @@ if (form) {
       return;
     }
 
-    if (!name || !email || !phone || !company || !productService || !struggle || !budget) {
-      statusNode.textContent = "Please complete all form fields before continuing.";
+    if (!name || !email) {
+      statusNode.textContent = "Please fill in your name and email.";
+      statusNode.classList.add("error");
+      return;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      statusNode.textContent = "Please enter a valid email address.";
       statusNode.classList.add("error");
       return;
     }
 
     const phonePattern = /^\+?[0-9\s-]{8,20}$/;
-    if (!phonePattern.test(phone)) {
-      statusNode.textContent = "Please enter a valid phone number.";
+    if (phone && !phonePattern.test(phone)) {
+      statusNode.textContent = "Please enter a valid phone number, or leave it empty.";
       statusNode.classList.add("error");
       return;
     }
+
+    submitBtn.disabled = true;
 
     try {
       const response = await fetch(form.action, {
@@ -98,12 +98,7 @@ if (form) {
         form_name: "marvelop_growth_review",
         name,
         email,
-        phone,
-        company,
-        compWebsite,
-        productService,
-        struggle,
-        budget
+        phone
       });
 
       sessionStorage.setItem(
@@ -111,22 +106,18 @@ if (form) {
         JSON.stringify({
           name,
           email,
-          phone,
-          company,
-          compWebsite,
-          productService,
-          struggle,
-          budget
+          phone
         })
       );
 
-      statusNode.textContent = "Thanks! Taking you to the next step...";
+      statusNode.textContent = "Sent! Taking you to your guide...";
       statusNode.classList.add("success");
       form.reset();
       window.setTimeout(() => {
         window.location.href = "thank-you.html";
       }, 450);
     } catch (error) {
+      submitBtn.disabled = false;
       statusNode.textContent = "Something went wrong. Please try again.";
       statusNode.classList.add("error");
     }

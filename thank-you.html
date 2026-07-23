@@ -3,27 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Thank You | Marvelop</title>
-    <meta
-      name="description"
-      content="Thanks for requesting a Meta Ads Growth Review from Marvelop. Review the next steps and optionally book a strategy call."
-    />
-    <meta property="og:title" content="Thank You | Marvelop" />
-    <meta
-      property="og:description"
-      content="Your Meta Ads Growth Review request has been received. See what happens next and optionally book a strategy call."
-    />
+    <title>Your Guide Is On Its Way | Marvelop</title>
+    <meta name="description" content="Your free guide is on its way. Check your email — and see what just happened." />
+    <meta name="robots" content="noindex" />
+    <meta property="og:title" content="Your Guide Is On Its Way | Marvelop" />
+    <meta property="og:description" content="Your free guide is on its way. Check your email." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://example.com/thank-you.html" />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?auto=format&fit=crop&w=1200&q=80" />
+    <meta property="og:url" content="https://marvelop.com/thank-you.html" />
     <link rel="icon" type="image/png" href="marvelop logo 360x80.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css" />
 
     <script>
       (function (w, d, s, l, i) {
@@ -37,6 +24,111 @@
         f.parentNode.insertBefore(j, f);
       })(window, document, "script", "dataLayer", "GTM-TD8DTC28");
     </script>
+
+    <style>
+      :root {
+        --green: #0e7c43;
+        --green-soft: #1daa61;
+        --green-pale: #e7f6ec;
+        --red: #d93025;
+        --ink: #1b1f23;
+        --muted: #5b6470;
+        --line: #e4e7eb;
+        --bg-alt: #f7f8fa;
+        --radius: 12px;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+        color: var(--ink);
+        background: var(--bg-alt);
+        font-size: 1.0625rem;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      .container { max-width: 720px; margin: 0 auto; padding: 0 20px; }
+      h1 { font-size: clamp(1.8rem, 6vw, 2.6rem); line-height: 1.15; letter-spacing: -0.02em; }
+      h2 { font-size: 1.35rem; margin-bottom: 12px; }
+
+      .reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.5s ease, transform 0.5s ease; }
+      .reveal.visible { opacity: 1; transform: none; }
+      @media (prefers-reduced-motion: reduce) {
+        .reveal { opacity: 1; transform: none; transition: none; }
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 12px 24px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--green);
+        color: #fff;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .btn:hover { background: #0b6636; }
+      .btn:focus-visible { outline: 3px solid #7fd0a4; outline-offset: 2px; }
+      .btn-outline {
+        background: #fff;
+        color: var(--green);
+        border: 2px solid var(--green);
+      }
+      .btn-outline:hover { background: var(--green-pale); }
+
+      .site-header {
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+        padding: 10px 0;
+      }
+      .nav-wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; }
+      .brand-logo { height: 32px; width: auto; display: block; }
+      .nav-back { font-size: 0.95rem; color: var(--muted); text-decoration: none; }
+      .nav-back:hover { color: var(--ink); }
+
+      main { padding: 48px 0 72px; }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 30px 26px;
+        box-shadow: 0 8px 22px rgba(27, 31, 35, 0.06);
+        margin-bottom: 22px;
+      }
+      .sent-check {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: var(--green-pale);
+        color: var(--green);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        font-weight: 800;
+        margin-bottom: 16px;
+      }
+      .lead { color: var(--muted); margin-top: 12px; }
+      .lead strong { color: var(--ink); }
+      .card .btn { margin-top: 20px; }
+      .dl-note { font-size: 0.85rem; color: var(--muted); margin-top: 10px; }
+
+      .notice-card { border-left: 4px solid var(--green-soft); }
+      .notice-card p + p { margin-top: 12px; }
+
+      .fastlane-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+      .fastlane-note { font-size: 0.9rem; color: var(--muted); margin-top: 12px; }
+
+      .site-footer { border-top: 1px solid var(--line); padding: 28px 0 40px; font-size: 0.85rem; color: var(--muted); background: var(--bg-alt); }
+      .site-footer p { margin: 0; }
+      .fine-print { margin-top: 8px; }
+    </style>
   </head>
   <body>
     <noscript>
@@ -47,60 +139,56 @@
         style="display: none; visibility: hidden"
       ></iframe>
     </noscript>
+
     <header class="site-header">
-      <div class="container nav-wrap">
+      <div class="nav-wrap">
         <div class="brand" aria-label="Marvelop">
           <img class="brand-logo" src="marvelop logo 360x80.png" alt="Marvelop" />
         </div>
-        <a class="btn btn-outline" href="index.html">Back to Home</a>
+        <a class="nav-back" href="index.html">← Back</a>
       </div>
     </header>
 
-    <main class="thank-you-main">
-      <div class="container thank-you-shell">
-        <section class="thank-you-card reveal">
-          <p class="eyebrow">Request Received</p>
-          <h1>Thanks — your review request is in.</h1>
+    <main>
+      <div class="container">
+        <section class="card reveal">
+          <span class="sent-check" aria-hidden="true">✓</span>
+          <h1>Sent! Check your email.</h1>
           <p class="lead">
-            We have received your details and will review your funnel fit before reaching out with next-step recommendations.
+            Your copy of <strong>Why Most of Your Facebook Leads Never Buy</strong> is on its way to <strong id="thankYouEmail">your inbox</strong>. If it's not there in a few minutes, check your Promotions or Spam tab.
           </p>
-          <div class="thank-you-highlight">
-            <p><strong>Company:</strong> <span id="thankYouCompany">Your company</span></p>
-            <p><strong>Reported budget range:</strong> <span id="thankYouBudget">Pending confirmation</span></p>
-          </div>
+          <!-- TODO: point this at the final hosted guide PDF -->
+          <a class="btn" href="guide/why-most-of-your-facebook-leads-never-buy.pdf" target="_blank" rel="noreferrer">Download the guide (PDF)</a>
+          <p class="dl-note">Backup link — same guide, instant download.</p>
         </section>
 
-        <section class="thank-you-next reveal">
-          <h2>What happens next</h2>
-          <ol class="thank-you-steps">
-            <li>We review your submitted details and assess whether there is a strong fit.</li>
-            <li>If there is a fit, we will contact you by WhatsApp or email within 1 business day.</li>
-            <li>If you want to move faster, you can optionally book a strategy call now.</li>
-          </ol>
-          <div class="thank-you-actions">
-            <a class="btn btn-primary" href="https://calendly.com/contact-amriahmad/30min" target="_blank" rel="noreferrer">Book a Strategy Call</a>
-            <a class="btn btn-outline" href="index.html#case-study">Review the Case Study Again</a>
+        <section class="card notice-card reveal">
+          <h2>Notice what just happened</h2>
+          <p>
+            You clicked out of Facebook, read a page, and filled in a real form. That small effort is exactly why the leads you'll learn to generate actually reply.
+          </p>
+          <p>You just experienced the method from the inside.</p>
+        </section>
+
+        <section class="card reveal">
+          <h2>Already know your leads are broken?</h2>
+          <p class="lead">
+            Want a second pair of eyes now? Get a <strong>free 15-minute Lead Quality Teardown</strong> — I'll look at your current setup and tell you honestly what I see.
+          </p>
+          <div class="fastlane-actions">
+            <a class="btn" href="https://wa.me/60126145179?text=Hi%20Marvelop%2C%20I%27d%20like%20a%20free%2015-minute%20Lead%20Quality%20Teardown." target="_blank" rel="noreferrer">WhatsApp us</a>
+            <a class="btn btn-outline" href="https://calendly.com/contact-amriahmad/30min" target="_blank" rel="noreferrer">Book a time slot</a>
           </div>
-          <p class="thank-you-note">This booking step is optional. If you prefer, simply wait for our follow-up.</p>
+          <p class="fastlane-note">Optional. The guide stands on its own — this is for owners who want to move faster.</p>
         </section>
       </div>
     </main>
 
     <footer class="site-footer">
-      <div class="container footer-wrap">
-        <div>
-          <h2>Better Lead Quality Starts With a Better Funnel</h2>
-          <a class="btn btn-primary" href="index.html#lead-form">Submit Another Request</a>
-        </div>
+      <div class="container">
+        <p>Marvelop · Compact Ventures Sdn Bhd 199601033428 (405780-T)</p>
+        <p>A-1-13A, Plaza Damas 3, No 63, Jalan Sri Hartamas 1, Sri Hartamas, 50480 Kuala Lumpur</p>
         <p class="fine-print">© <span id="year"></span> Marvelop. All rights reserved.</p>
-        <div class="business-details">
-          <p>Compact Ventures Sdn Bhd 199601033428 (405780-T)</p>
-          <p>0126145179</p>
-          <p>A-1-13A, PLAZA DAMAS 3,</p>
-          <p>NO 63, JALAN SRI HARTAMAS 1,</p>
-          <p>SRI HARTAMAS,</p>
-          <p>50480 KUALA LUMPUR</p>
-        </div>
       </div>
     </footer>
 

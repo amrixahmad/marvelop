@@ -3,27 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Marvelop | Build A Stable Revenue Stream Using Meta Ads</title>
+    <title>Free Guide: Why Your Facebook Leads Never Reply | Marvelop</title>
     <meta
       name="description"
-      content="Marvelop helps established businesses turn Meta ad spend into qualified sales opportunities through sharper funnel strategy, lead quality optimization, and scalable growth systems."
+      content="The free 20-minute guide for Malaysian businesses — why Instant Form leads ghost you, and the one-page fix that took a real client from 30% to 80% reply rate."
     />
-    <meta property="og:title" content="Marvelop | Build A Stable Revenue Stream Using Meta Ads" />
+    <meta property="og:title" content="Free Guide: Why Your Facebook Leads Never Reply | Marvelop" />
     <meta
       property="og:description"
-      content="Turn Meta ad spend into qualified sales opportunities with sharper funnel strategy, stronger lead quality, and a scalable optimization process."
+      content="The free 20-minute guide for Malaysian businesses — why Instant Form leads ghost you, and the one-page fix that took a real client from 30% to 80% reply rate."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://example.com" />
+    <meta property="og:url" content="https://marvelop.com/" />
     <meta property="og:image" content="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?auto=format&fit=crop&w=1200&q=80" />
     <link rel="icon" type="image/png" href="marvelop logo 360x80.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css" />
 
     <script>
       (function (w, d, s, l, i) {
@@ -38,6 +31,316 @@
       })(window, document, "script", "dataLayer", "GTM-TD8DTC28");
     </script>
 
+    <style>
+      :root {
+        --green: #0e7c43;
+        --green-soft: #1daa61;
+        --green-pale: #e7f6ec;
+        --red: #d93025;
+        --ink: #1b1f23;
+        --muted: #5b6470;
+        --line: #e4e7eb;
+        --bg-alt: #f7f8fa;
+        --radius: 12px;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        font-family: -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+        color: var(--ink);
+        background: #fff;
+        font-size: 1.0625rem;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      .container { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+      section { padding: 56px 0; }
+      h1 { font-size: clamp(2rem, 6vw, 3.25rem); line-height: 1.1; letter-spacing: -0.02em; }
+      h2 { font-size: clamp(1.5rem, 4vw, 1.75rem); line-height: 1.2; letter-spacing: -0.01em; margin-bottom: 16px; }
+      p + p { margin-top: 14px; }
+
+      .reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.5s ease, transform 0.5s ease; }
+      .reveal.visible { opacity: 1; transform: none; }
+      @media (prefers-reduced-motion: reduce) {
+        .reveal { opacity: 1; transform: none; transition: none; }
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 12px 24px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--green);
+        color: #fff;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.15s ease, transform 0.1s ease;
+      }
+      .btn:hover { background: #0b6636; }
+      .btn:active { transform: scale(0.98); }
+      .btn:focus-visible { outline: 3px solid #7fd0a4; outline-offset: 2px; }
+      .btn .send-glyph { font-size: 0.85em; }
+      .btn[disabled] { opacity: 0.6; cursor: wait; }
+      .btn-small { min-height: 40px; padding: 8px 18px; font-size: 0.95rem; }
+
+      /* Header */
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(6px);
+        border-bottom: 1px solid var(--line);
+      }
+      .nav-wrap { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; padding-bottom: 10px; }
+      .brand-logo { height: 32px; width: auto; display: block; }
+
+      /* Hero */
+      .hero { padding-top: 40px; }
+      .hero-grid { display: grid; gap: 36px; align-items: center; }
+      @media (min-width: 768px) { .hero-grid { grid-template-columns: 1.1fr 0.9fr; } }
+      .eyebrow {
+        display: inline-block;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--green);
+        background: var(--green-pale);
+        border-radius: 999px;
+        padding: 4px 14px;
+        margin-bottom: 18px;
+      }
+      .h1-accent { display: block; color: var(--green); }
+      .hero .lead { margin: 18px 0 24px; color: var(--muted); max-width: 34em; }
+
+      /* Chat mockup */
+      .chat-phone {
+        max-width: 360px;
+        margin: 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 14px 34px rgba(27, 31, 35, 0.12);
+        background: #f2efe9;
+      }
+      .chat-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+      .chat-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--line);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--muted);
+        flex: none;
+      }
+      .chat-top small { display: block; font-weight: 400; color: var(--muted); font-size: 0.75rem; }
+      .chat-thread { padding: 16px 12px 20px; display: flex; flex-direction: column; gap: 12px; }
+      .chat-day {
+        align-self: center;
+        font-size: 0.7rem;
+        color: var(--muted);
+        background: #fff;
+        border-radius: 6px;
+        padding: 2px 10px;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06);
+      }
+      .bubble-wrap { align-self: flex-end; max-width: 85%; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+      .bubble {
+        background: var(--green-pale);
+        border-radius: 12px 12px 4px 12px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        line-height: 1.45;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+      }
+      .bubble-meta { font-size: 0.7rem; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+      .ticks { color: #9aa4af; font-weight: 700; letter-spacing: -0.12em; }
+      .no-reply { font-size: 0.72rem; color: var(--red); font-weight: 600; }
+      .chat-caption { text-align: center; font-size: 0.95rem; color: var(--muted); font-style: italic; margin-top: 14px; }
+
+      /* Alternate sections */
+      .tint { background: var(--bg-alt); }
+      .section-intro { color: var(--muted); max-width: 40em; }
+      .cost-line strong { color: var(--red); }
+
+      /* Receipt */
+      .receipt-wrap { display: flex; justify-content: center; margin: 30px 0 18px; }
+      .receipt {
+        font-family: "Courier New", monospace;
+        background: #fffdf7;
+        width: min(340px, 100%);
+        padding: 22px 18px;
+        transform: rotate(-1.5deg);
+        box-shadow: 0 10px 26px rgba(27, 31, 35, 0.16);
+        border-top: 2px dashed #c9c4b8;
+        border-bottom: 2px dashed #c9c4b8;
+        font-size: 0.85rem;
+        line-height: 1.7;
+        color: #2b2b28;
+      }
+      .receipt .r-center { text-align: center; font-weight: 700; }
+      .receipt .r-rule { border-top: 1px dashed #b9b4a8; margin: 8px 0; }
+      .receipt .r-row { display: flex; justify-content: space-between; gap: 12px; }
+      .receipt .r-row span:last-child { white-space: nowrap; }
+      .receipt .r-total { font-weight: 700; color: var(--red); }
+      .receipt-caption { text-align: center; color: var(--muted); font-size: 0.95rem; max-width: 36em; margin: 0 auto; }
+
+      /* Ads-style table */
+      .ads-table-card {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        overflow-x: auto;
+        margin: 26px 0 18px;
+        box-shadow: 0 6px 18px rgba(27, 31, 35, 0.06);
+        background: #fff;
+      }
+      .ads-table { width: 100%; border-collapse: collapse; font-size: 0.98rem; }
+      .ads-table th {
+        text-align: left;
+        font-size: 0.8rem;
+        color: var(--muted);
+        font-weight: 600;
+        background: var(--bg-alt);
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      .ads-table th .sort { color: #b3bac2; font-size: 0.7rem; }
+      .ads-table td { padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+      .ads-table tr:last-child td { border-bottom: 0; }
+      .ads-table tbody tr:hover td { background: #fafbfc; }
+      .ads-table .metric { font-weight: 800; font-size: 1.35rem; }
+      .ads-table .win .metric { color: var(--green); }
+      .delta { color: var(--green-soft); font-weight: 700; font-size: 0.85rem; margin-left: 6px; }
+      .campaign-name { font-weight: 600; }
+      .campaign-sub { display: block; font-size: 0.8rem; color: var(--muted); font-weight: 400; }
+      .pull-quote {
+        border-left: 4px solid var(--green-soft);
+        padding: 6px 0 6px 18px;
+        margin: 22px 0 10px;
+        font-size: 1.15rem;
+        font-style: italic;
+      }
+      .quote-source { color: var(--muted); font-size: 0.9rem; }
+
+      /* Product card */
+      .product-card {
+        position: relative;
+        display: grid;
+        gap: 24px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #fff;
+        padding: 26px;
+        margin-top: 26px;
+        box-shadow: 0 10px 26px rgba(27, 31, 35, 0.08);
+      }
+      @media (min-width: 640px) { .product-card { grid-template-columns: 220px 1fr; } }
+      .badge {
+        position: absolute;
+        top: -12px;
+        right: 18px;
+        background: var(--red);
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 800;
+        padding: 5px 12px;
+        border-radius: 6px;
+        letter-spacing: 0.02em;
+      }
+      .guide-cover {
+        background: var(--ink);
+        color: #fff;
+        border-radius: 8px;
+        aspect-ratio: 3 / 4;
+        max-width: 220px;
+        margin: 0 auto;
+        padding: 20px 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .guide-cover .gc-kicker { font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: #9fe8c0; font-weight: 700; }
+      .guide-cover .gc-title { font-size: 1.15rem; font-weight: 800; line-height: 1.25; }
+      .guide-cover .gc-brand { font-size: 0.75rem; color: #c3c9cf; }
+      .price-row { display: flex; align-items: baseline; gap: 12px; margin: 8px 0 14px; }
+      .price-was { color: var(--muted); text-decoration: line-through; font-size: 1.05rem; }
+      .price-now { color: var(--red); font-weight: 800; font-size: 1.7rem; }
+      .tick-list { list-style: none; margin: 0 0 20px; }
+      .tick-list li { padding-left: 30px; position: relative; margin-bottom: 9px; }
+      .tick-list li::before { content: "✓"; position: absolute; left: 4px; color: var(--green-soft); font-weight: 800; }
+
+      /* Fit */
+      .fit-grid { display: grid; gap: 20px; margin-top: 22px; }
+      @media (min-width: 768px) { .fit-grid { grid-template-columns: 1fr 1fr; } }
+      .fit-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; background: #fff; }
+      .fit-card h3 { font-size: 1.05rem; margin-bottom: 10px; }
+      .fit-card.not h3 { color: var(--muted); }
+      .fit-card ul { margin-left: 20px; }
+      .fit-card li { margin-bottom: 8px; }
+
+      /* Form */
+      .form-card {
+        max-width: 480px;
+        margin: 26px auto 0;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 28px 24px;
+        box-shadow: 0 10px 26px rgba(27, 31, 35, 0.08);
+      }
+      .lead-form label { display: block; font-weight: 700; font-size: 0.9rem; margin: 16px 0 6px; }
+      .lead-form label:first-child { margin-top: 0; }
+      .lead-form .optional { font-weight: 400; color: var(--muted); }
+      .lead-form input {
+        width: 100%;
+        min-height: 48px;
+        border: 1px solid #cfd5db;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 1rem;
+        font-family: inherit;
+      }
+      .lead-form input:focus { outline: 2px solid var(--green-soft); border-color: var(--green-soft); }
+      .lead-form .btn { width: 100%; margin-top: 22px; }
+      .form-note { font-size: 0.85rem; color: var(--muted); margin-top: 12px; text-align: center; }
+      .form-status { margin-top: 10px; font-size: 0.95rem; text-align: center; min-height: 1.4em; }
+      .form-status.error { color: var(--red); }
+      .form-status.success { color: var(--green); }
+      .honeypot { position: absolute; left: -9999px; opacity: 0; height: 0; width: 0; }
+
+      /* FAQ */
+      .faq-item { border-top: 1px solid var(--line); padding: 18px 0; }
+      .faq-item:last-child { border-bottom: 1px solid var(--line); }
+      .faq-item h3 { font-size: 1.05rem; margin-bottom: 6px; }
+      .faq-item p { color: var(--muted); }
+
+      /* Footer */
+      .site-footer { background: var(--bg-alt); border-top: 1px solid var(--line); padding: 34px 0 44px; font-size: 0.85rem; color: var(--muted); }
+      .site-footer p { margin: 0; }
+      .fine-print { margin-top: 10px; }
+    </style>
   </head>
   <body>
     <noscript>
@@ -48,282 +351,254 @@
         style="display: none; visibility: hidden"
       ></iframe>
     </noscript>
+
     <header class="site-header">
       <div class="container nav-wrap">
         <div class="brand" aria-label="Marvelop">
           <img class="brand-logo" src="marvelop logo 360x80.png" alt="Marvelop" />
         </div>
-        <a class="btn btn-outline" href="#lead-form">Request Free Review</a>
+        <a class="btn btn-small" href="#lead-form">Get the free guide</a>
       </div>
     </header>
 
     <main>
+      <!-- S2 Hero -->
       <section class="hero reveal">
         <div class="container hero-grid">
-          <div class="hero-copy">
-            <p class="eyebrow">For Businesses Ready to Scale Meta Ads Profitably</p>
-            <h1>Turn Meta Ad Spend Into A Stable Revenue Stream</h1>
-            <p class="lead">
-              Marvelop helps established businesses generate better quality leads from Facebook and Instagram ads through sharper funnel strategy, stronger offer positioning, and continuous campaign optimization.
-            </p>
-            <div class="proof-row" aria-label="Core capabilities">
-              <span class="proof-pill">Meta Ads Strategy</span>
-              <span class="proof-pill">Landing Page CRO</span>
-              <span class="proof-pill">Lead Quality Focus</span>
-            </div>
-            <ul class="hero-points">
-              <li>Built for businesses that want qualified pipeline, not vanity metrics</li>
-              <li>Focused on lead quality, conversion efficiency, and scalable growth</li>
-              <li>Clear optimization across ads, landing pages, and follow-up flow</li>
-            </ul>
-            <a class="btn btn-primary" href="#lead-form">Request a Free Meta Ads Growth Review</a>
-            <p class="hero-qualification">Best suited for established businesses with a proven offer, internal sales capacity, and a dedicated growth budget.</p>
-          </div>
-          <aside class="hero-card">
-            <p class="hero-card-title">What You’ll Get in the Review</p>
-            <p class="hero-proof"><strong>Case study result:</strong> 38% lower cost per qualified lead within 60 days</p>
-            <ul>
-              <li>A breakdown of where your current Meta funnel is leaking leads</li>
-              <li>A diagnosis of what is hurting lead quality and cost efficiency</li>
-              <li>Practical next steps to improve conversion performance over the next 30 days</li>
-            </ul>
-            <p class="hero-card-footnote">No generic audit deck. Only actionable recommendations based on growth potential and fit.</p>
-          </aside>
-        </div>
-      </section>
-
-      <section class="trust-strip reveal" aria-label="Trust indicators">
-        <div class="container trust-strip-grid">
-          <p class="trust-strip-label">Built around the signals that matter most for paid acquisition</p>
-          <div class="trust-items">
-            <span class="trust-item">Qualified lead generation</span>
-            <span class="trust-item">Meta ads optimization</span>
-            <span class="trust-item">Landing page conversion strategy</span>
-            <span class="trust-item">Malaysia market focus</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="section reveal" id="pain-points">
-        <div class="container">
-          <h2>Why Most Meta Campaigns Fail to Produce Qualified Leads</h2>
-          <p class="section-intro">Most businesses do not lose money because Meta ads do not work. They lose money because the funnel attracts the wrong people who have no intention of buying from them and fails to turn traffic into actual sales conversations.</p>
-          <div class="cards three-up">
-            <article class="card">
-              <h3>High Click Volume, Weak Commercial Intent</h3>
-              <p>Campaigns often generate activity that looks good on paper but does not turn into meaningful sales opportunities.</p>
-            </article>
-            <article class="card">
-              <h3>Low-Quality Leads That Waste Sales Time</h3>
-              <p>Your team ends up chasing people who are not the right fit, not ready to buy, or never respond after submitting a form.</p>
-            </article>
-            <article class="card">
-              <h3>No Reliable System for Scaling What Works</h3>
-              <p>Without a structured testing and feedback loop, performance stays inconsistent and hard to improve with confidence.</p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="section reveal tint" id="solution">
-        <div class="container">
-          <h2>How Marvelop Improves Lead Quality and Conversion Efficiency</h2>
-          <p class="section-intro">We do not treat Meta ads as an isolated media-buying problem. We look at the full acquisition path, from message and targeting to landing page and lead outcome, so campaigns generate commercially useful results.</p>
-          <div class="steps">
-            <article>
-              <span>01</span>
-              <h3>Offer and Funnel Alignment</h3>
-              <p>We refine the offer, landing message, and audience intent so your campaigns attract more relevant prospects from the start.</p>
-            </article>
-            <article>
-              <span>02</span>
-              <h3>Creative and Campaign Optimization</h3>
-              <p>We test angles, creatives, hooks, and conversion signals to reduce wasted spend and improve the quality of inbound leads.</p>
-            </article>
-            <article>
-              <span>03</span>
-              <h3>Lead Quality Feedback Loop</h3>
-              <p>We use actual lead outcomes, not just click metrics, to help campaigns optimize toward higher-value opportunities over time.</p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="section reveal case-study-section" id="case-study">
-        <div class="container case-grid">
           <div>
-            <p class="eyebrow">Case Study</p>
-            <h2>How The Little Gym Improved Lead Quality and Dropped Cost Per Lead to RM4.07</h2>
-            <p>
-              The Little Gym, a children’s physical development and enrichment brand, had already been spending consistently on Meta ads. They set aside a dedicated quaterly budget for meta ads. The issue was that they were not satisfied with the volume or the quality of leads coming in.
+            <p class="eyebrow">For Malaysian businesses running Facebook &amp; Instagram ads</p>
+            <h1>
+              Getting Facebook leads that never reply?
+              <span class="h1-accent">It's not your product. It's your form.</span>
+            </h1>
+            <p class="lead">
+              The free 20-minute guide that explains why Instant Form leads ghost you, forget you, and waste your budget — and the one-page fix that took a real client from 30% to 80% reply rate. No sales call. The guide is the guide.
             </p>
-            <p>
-              We rebuilt the campaign structure around stronger lead intent, tighter optimization, and more commercially useful acquisition signals. By March 2026, cost per lead had come down significantly, lead flow became more stable, and sales reported that the leads were easier to work with.
-            </p>
+            <a class="btn" href="#lead-form"><span class="send-glyph">➤</span> Send me the free guide</a>
           </div>
-          <div class="stats-card">
-            <ul>
-              <li><strong>RM39.80 to RM4.07</strong> best-case cost per lead improvement from November 2025 to March 2026</li>
-              <li><strong>89%</strong> cheaper leads on the strongest performing lead campaign</li>
-              <li><strong>More stable lead flow</strong> with acquisition costs that are easier to forecast</li>
-              <li><strong>Higher sales confidence</strong> because lead quality improved, not just lead volume</li>
-            </ul>
-            <blockquote>
-              "The team now feels more confident doing sales forecasts because lead flow is more stable and acquisition costs are more predictable. On top of that, sales are happier with the lead quality."
-            </blockquote>
-            <p class="quote-source">- Feedback from The Little Gym team</p>
+          <div>
+            <div class="chat-phone" aria-hidden="true">
+              <div class="chat-top">
+                <span class="chat-avatar">L</span>
+                <span>Lead #34<small>last seen recently</small></span>
+              </div>
+              <div class="chat-thread">
+                <span class="chat-day">Tuesday</span>
+                <div class="bubble-wrap">
+                  <div class="bubble">Hi! Thanks for your interest 😊 Are you still looking for this month?</div>
+                  <span class="bubble-meta">2:14 PM <span class="ticks">✓✓</span></span>
+                  <span class="no-reply">no reply — Tuesday</span>
+                </div>
+                <span class="chat-day">Thursday</span>
+                <div class="bubble-wrap">
+                  <div class="bubble">Hi, just following up on your enquiry!</div>
+                  <span class="bubble-meta">9:02 AM <span class="ticks">✓✓</span></span>
+                  <span class="no-reply">no reply — Thursday</span>
+                </div>
+                <span class="chat-day">3 weeks ago</span>
+                <div class="bubble-wrap">
+                  <div class="bubble">Hello?</div>
+                  <span class="bubble-meta">4:47 PM <span class="ticks">✓✓</span></span>
+                  <span class="no-reply">still no reply</span>
+                </div>
+              </div>
+            </div>
+            <p class="chat-caption">Look familiar? There's a reason — and it's fixable.</p>
           </div>
         </div>
-        <div class="container case-study-media">
-          <figure class="case-shot">
-            <img src="marvelop-case-study-before.png" alt="The Little Gym Meta ads results in November 2025 showing cost per lead up to RM39.80 on one lead campaign which is very expensive in this industry." />
-            <figcaption><strong>Before:</strong> November 2025 performance, with lead campaigns reaching up to almost RM40 per lead.</figcaption>
-          </figure>
-          <figure class="case-shot">
-            <img src="marvelop-case-study-after.png" alt="The Little Gym Meta ads results in March 2026 showing improved lead campaign cost per result, with one campaign at RM4.11 per lead." />
-            <figcaption><strong>After:</strong> March 2026 performance, with the best lead campaign down to RM4.07 per lead.</figcaption>
-          </figure>
-        </div>
-        <div class="container case-study-summary">
+      </section>
+
+      <!-- S3 Recognition -->
+      <section class="tint reveal">
+        <div class="container">
+          <h2>The maths your dashboard never shows you</h2>
+          <p class="section-intro">50 leads at RM6 each. Looks great in the report.</p>
           <p>
-            This is the kind of outcome medium-to-large businesses care about: not just cheaper leads on paper, but a more predictable acquisition system that gives sales better conversations and leadership more confidence in forecasting.
+            Then: 15 never reply at all. 15 ask "berapa harga?" and vanish. 10 chat politely and disappear. A few insist they <em>never filled in any form</em> — and they're not lying, they genuinely don't remember.
+          </p>
+          <p class="cost-line">
+            You're left with maybe 5 real conversations. That RM6 lead? It's actually a <strong>RM60 real conversation</strong> — and your salesperson burned hours finding out which was which.
           </p>
         </div>
       </section>
 
-      <section class="section reveal" id="fit">
-        <div class="container case-grid">
-          <div>
-            <p class="eyebrow">Best Fit</p>
-            <h2>Who This Is Best For</h2>
-            <p>
-              Our process is best suited to companies that already have something proven to sell and want a more efficient way to turn paid traffic into qualified pipeline.
-            </p>
-          </div>
-          <div class="stats-card">
-            <ul>
-              <li>Businesses already investing in growth and willing to scale what works</li>
-              <li>Teams that can respond to leads and handle sales follow-up properly</li>
-              <li>Companies that care about lead quality, not just lower CPL</li>
-              <li>Brands looking for a more structured Meta ads growth system</li>
-            </ul>
-            <blockquote>
-              Not ideal for businesses that are just starting out and looking for a product/market fit.
-            </blockquote>
-          </div>
-        </div>
-      </section>
-
-      <section class="section reveal section-emphasis" id="lead-form">
-        <div class="container form-grid">
-          <div>
-            <h2>Request a Free Meta Ads Growth Review</h2>
-            <p>If you are currently running Meta ads, or preparing to scale, we will review where your funnel may be losing quality and efficiency, then reach out with next-step recommendations if there is a fit.</p>
-            <ul class="trust-list">
-              <li>Focused on Malaysia-based growth campaigns</li>
-              <li>Practical recommendations, not generic agency talk</li>
-              <li>Follow-up via WhatsApp and email within 1 business day</li>
-              <li>Optional strategy call booking after you submit</li>
-            </ul>
-          </div>
-
-          <form class="lead-form" id="auditForm" action="https://formspree.io/f/xpqebzrq" method="POST" novalidate>
-            <label for="name">Your Name</label>
-            <input type="text" id="name" name="name" placeholder="Your full name" required />
-
-            <label for="email">Email you use for work</label>
-            <input type="email" id="email" name="email" placeholder="you@company.com" required />
-
-            <label for="phone">Phone number</label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              placeholder="+60 12-345 6789"
-              required
-              pattern="^\\+?[0-9\\s-]{8,20}$"
-            />
-
-            <label for="company">Your Company Name</label>
-            <input type="text" id="company" name="company" placeholder="Your company name" required />
-
-            <label for="comp_website">Company website (if any)</label>
-            <input type="url" id="comp_website" name="comp_website" placeholder="https://example.com" />
-
-            <label for="product_service">Product/Service</label>
-            <input type="text" id="product_service" name="product_service" placeholder="What product or service do you sell?" required />
-
-            <label for="struggle">What is your main struggle with your current ads?</label>
-            <select id="struggle" name="struggle" required>
-              <option value="" selected disabled>Select your main struggle</option>
-              <option value="Too expensive/CPL too high">Too expensive/CPL too high</option>
-              <option value="Poor lead quality">Poor lead quality</option>
-              <option value="Campaign quality drops when I increase spend">Campaign quality drops when I increase spend</option>
-              <option value="Don't know why they aren't working">Don't know why they aren't working</option>
-            </select>
-
-            <label for="budget">Monthly Ad Budget</label>
-            <select id="budget" name="budget" required>
-              <option value="" selected disabled>Select your monthly ad budget</option>
-              <option value="Under RM5,000">Under RM5,000</option>
-              <option value="RM5,000 - RM15,000">RM5,000 - RM15,000</option>
-              <option value="RM15,000 - RM50,000">RM15,000 - RM50,000</option>
-              <option value="RM50,000+">RM50,000+</option>
-            </select>
-
-            <input type="text" name="hp_field" id="hp_field" class="honeypot" tabindex="-1" autocomplete="off" />
-
-            <button type="submit" class="btn btn-primary">Request My Free Review</button>
-            <p class="form-note">By submitting, you agree to be contacted regarding your Meta ads growth strategy and you will be taken to the next step.</p>
-            <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
-          </form>
-        </div>
-      </section>
-
-      <section class="section reveal faq" id="faq">
+      <!-- S4 Receipt -->
+      <section class="reveal">
         <div class="container">
-          <h2>Frequently Asked Questions</h2>
-          <div class="cards">
-            <article class="card">
-              <h3>What type of business is the best fit?</h3>
-              <p>We work best with established businesses that already have a real offer, a functioning sales process, and the ability to handle inbound leads properly.</p>
-            </article>
-            <article class="card">
-              <h3>Do you help with lead quality, not just lead volume?</h3>
-              <p>Yes. Our focus is not just generating more enquiries, but improving the relevance and commercial value of the leads coming in.</p>
-            </article>
-            <article class="card">
-              <h3>How soon can results improve?</h3>
-              <p>Initial performance signals can improve within the first few weeks, but meaningful optimization usually compounds over 30 to 90 days depending on funnel quality, budget, and sales feedback.</p>
-            </article>
-            <article class="card">
-              <h3>Do you only work with Malaysia businesses?</h3>
-              <p>Our positioning is built around Malaysia-based businesses and the realities of Meta traffic quality in this market.</p>
-            </article>
-            <article class="card">
-              <h3>What happens after I submit the form?</h3>
-              <p>We review your details, assess fit, and reach out with next-step recommendations. If there is a strong fit, we can discuss a deeper strategy conversation.</p>
-            </article>
+          <h2>You're already paying the Tire-Kicker Tax</h2>
+          <div class="receipt-wrap">
+            <div class="receipt" role="img" aria-label="Receipt showing the monthly cost of junk leads: RM4,670 per month, RM56,040 per year">
+              <div class="r-center">MEDIA IKLAN SDN BHD</div>
+              <div class="r-center">*** RESIT RASMI ***</div>
+              <div class="r-rule"></div>
+              <div class="r-row"><span>160 leads yang tak reply</span><span>RM4,000</span></div>
+              <div class="r-row"><span>27 jam kejar "leads"</span><span>RM670</span></div>
+              <div class="r-row"><span>Leads yang lupa isi borang</span><span>---</span></div>
+              <div class="r-rule"></div>
+              <div class="r-row r-total"><span>JUMLAH / MONTH</span><span>RM4,670</span></div>
+              <div class="r-row r-total"><span>JUMLAH / YEAR</span><span>RM56,040</span></div>
+              <div class="r-rule"></div>
+              <div class="r-center">TERIMA KASIH, DATANG LAGI</div>
+            </div>
+          </div>
+          <p class="receipt-caption">
+            Typical RM5,000/month ad account running Instant Forms at an 80% junk-lead rate. The full breakdown — and how to stop paying it — is in the guide.
+          </p>
+        </div>
+      </section>
+
+      <!-- S5 Proof -->
+      <section class="tint reveal">
+        <div class="container">
+          <h2>Same ads. Same audience. One difference.</h2>
+          <p class="section-intro">
+            A children's enrichment brand ran their Instant Form campaigns head-to-head against a simple landing page — a real split test, same account, same time.
+          </p>
+          <div class="ads-table-card">
+            <table class="ads-table">
+              <thead>
+                <tr>
+                  <th scope="col">Campaign <span class="sort">▼</span></th>
+                  <th scope="col">Reply rate <span class="sort">▲▼</span></th>
+                  <th scope="col">Booking rate <span class="sort">▲▼</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="campaign-name">Instant Form campaigns<span class="campaign-sub">Leads (form)</span></td>
+                  <td><span class="metric">30%</span></td>
+                  <td><span class="metric">&lt;5%</span></td>
+                </tr>
+                <tr class="win">
+                  <td class="campaign-name">Landing page campaign<span class="campaign-sub">Leads (website)</span></td>
+                  <td><span class="metric">80%</span><span class="delta">▲</span></td>
+                  <td><span class="metric">30%</span><span class="delta">▲</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <blockquote class="pull-quote">"Sales are happier with the lead quality."</blockquote>
+          <p class="quote-source">— The Little Gym team</p>
+          <p style="margin-top: 18px;">
+            Replies nearly tripled. Bookings multiplied six times over. The only variable: what a person has to do before becoming a lead.
+          </p>
+        </div>
+      </section>
+
+      <!-- S6 Offer -->
+      <section class="reveal">
+        <div class="container">
+          <h2>Get the full method — free</h2>
+          <div class="product-card">
+            <span class="badge">FREE for MY advertisers</span>
+            <div class="guide-cover" aria-hidden="true">
+              <span class="gc-kicker">Free Guide · 20-min read</span>
+              <span class="gc-title">Why Most of Your Facebook Leads Never Buy</span>
+              <span class="gc-brand">Marvelop</span>
+            </div>
+            <div>
+              <h3>Why Most of Your Facebook Leads Never Buy — the 20-minute guide</h3>
+              <div class="price-row">
+                <span class="price-was">RM49</span>
+                <span class="price-now">FREE</span>
+              </div>
+              <ul class="tick-list">
+                <li>Why leads ghost you and swear they never signed up (Ch 1–2)</li>
+                <li>How junk leads train Facebook's algorithm against you (Ch 3)</li>
+                <li>Your Tire-Kicker Tax, calculated (Ch 4)</li>
+                <li>The Qualifying Friction Method + the full split-test numbers (Ch 5)</li>
+                <li>Why landing pages no longer cost RM8,000 (Ch 6)</li>
+                <li>The pixel doors that open after (Ch 7)</li>
+              </ul>
+              <a class="btn" href="#lead-form"><span class="send-glyph">➤</span> Send me the free guide</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- S7 Fit -->
+      <section class="tint reveal">
+        <div class="container">
+          <h2>Who this is for</h2>
+          <div class="fit-grid">
+            <div class="fit-card">
+              <h3>For</h3>
+              <ul>
+                <li>Businesses running (or about to run) Meta ads</li>
+                <li>Teams that follow up leads and care about quality, not just volume</li>
+                <li>Owners tired of "cheap" leads that cost a fortune</li>
+              </ul>
+            </div>
+            <div class="fit-card not">
+              <h3>Not for</h3>
+              <ul>
+                <li>Businesses still hunting for product-market fit — the guide assumes you have something proven to sell</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- S8 Form -->
+      <section class="reveal" id="lead-form">
+        <div class="container">
+          <h2 style="text-align: center;">Where should we send it?</h2>
+          <div class="form-card">
+            <form class="lead-form" id="guideForm" action="https://formspree.io/f/xpqebzrq" method="POST" novalidate>
+              <label for="name">Name</label>
+              <input type="text" id="name" name="name" placeholder="Your name" autocomplete="name" required />
+
+              <label for="email">Email <span class="optional">(work email you actually check)</span></label>
+              <input type="email" id="email" name="email" placeholder="you@company.com" autocomplete="email" required />
+
+              <label for="phone">WhatsApp number <span class="optional">(optional)</span></label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                placeholder="+60 12-345 6789"
+                autocomplete="tel"
+                pattern="^\+?[0-9\s\-]{8,20}$"
+              />
+
+              <input type="text" name="hp_field" id="hp_field" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+              <button type="submit" class="btn" id="submitBtn"><span class="send-glyph">➤</span> Send me the guide</button>
+              <p class="form-note">Instant delivery. No sales call, no audit pitch — the guide is the guide. Unsubscribe anytime.</p>
+              <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- S9 FAQ -->
+      <section class="tint reveal">
+        <div class="container">
+          <h2>Quick questions</h2>
+          <div class="faq-item">
+            <h3>Is this a sales pitch in disguise?</h3>
+            <p>No. You get the guide instantly, no call required. Afterwards we send a short email series with real numbers and teardowns — genuinely useful, easy to unsubscribe.</p>
+          </div>
+          <div class="faq-item">
+            <h3>I don't have a landing page or website. Relevant to me?</h3>
+            <p>Especially you — the guide exists precisely for businesses running everything through Instant Forms and WhatsApp.</p>
+          </div>
+          <div class="faq-item">
+            <h3>Who's behind this?</h3>
+            <p>Marvelop, a KL-based Meta ads practice — 10+ years across software and digital marketing. The case study on this page is our client work.</p>
           </div>
         </div>
       </section>
     </main>
 
+    <!-- S10 Footer -->
     <footer class="site-footer">
-      <div class="container footer-wrap">
-        <div>
-          <h2>Stop Paying for Traffic That Doesn’t Turn Into Real Sales Conversations</h2>
-          <a class="btn btn-primary" href="#lead-form">Request a Free Meta Ads Growth Review</a>
-        </div>
-        <p class="fine-print">© <span id="year"></span> Marvelop. All rights reserved.</p>
-        <div class="business-details">
-          <p>Compact Ventures Sdn Bhd 199601033428 (405780-T)</p>
-          <p>0126145179</p>
-          <p>A-1-13A, PLAZA DAMAS 3,</p>
-          <p>NO 63, JALAN SRI HARTAMAS 1,</p>
-          <p>SRI HARTAMAS,</p>
-          <p>50480 KUALA LUMPUR</p>
-        </div>
+      <div class="container">
+        <p>Marvelop · Compact Ventures Sdn Bhd 199601033428 (405780-T)</p>
+        <p>A-1-13A, Plaza Damas 3, No 63, Jalan Sri Hartamas 1, Sri Hartamas, 50480 Kuala Lumpur · marvelop.com</p>
+        <p class="fine-print">
+          © <span id="year"></span> Marvelop. All rights reserved. Results shown are from a documented client engagement; individual results vary.
+        </p>
       </div>
     </footer>
 
