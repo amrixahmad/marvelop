@@ -57,8 +57,8 @@ if (form) {
       return;
     }
 
-    if (!name || !email) {
-      statusNode.textContent = "Please fill in your name and email.";
+    if (!name || !email || !phone) {
+      statusNode.textContent = "Please fill in your name, email, and WhatsApp number.";
       statusNode.classList.add("error");
       return;
     }
