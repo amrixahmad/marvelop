@@ -6,12 +6,12 @@
     <title>Marvelop AdSpy | Meta Ads Competitor Threat Radar & Alert Tool</title>
     <meta
       name="description"
-      content="Spy on your competitors' active Facebook & Instagram ads in real-time. Detect scaled winning creatives and receive automated new ad launch email alerts."
+      content="Spy on your competitors' active Facebook & Instagram ads in real-time. View 5 sample ads per competitor and activate automated launch email alerts."
     />
     <meta property="og:title" content="Marvelop AdSpy | Meta Ads Competitor Threat Radar" />
     <meta
       property="og:description"
-      content="Detect competitor Meta ad moves before they steal your market. Get active ad breakdowns, copy hooks analysis, and automated email alerts."
+      content="Detect competitor Meta ad moves before they steal your market. Get 5 sample active ads, copy hooks analysis, and optional email alerts."
     />
     <meta property="og:type" content="website" />
     <link rel="icon" type="image/png" href="marvelop logo 360x80.png" />
@@ -51,55 +51,41 @@
       <!-- HERO & TRACKER INPUT FORM -->
       <section class="hero reveal">
         <div class="container hero-center">
-          <p class="eyebrow">⚡ Meta Ads Competitor Intelligence & Launch Radar</p>
-          <h1>Detect Competitor Meta Ads Before They Steal Your Pipeline</h1>
+          <p class="eyebrow">⚡ Free Competitor Meta Ads Inspector</p>
+          <h1>Inspect Competitor Meta Ads Instantly</h1>
           <p class="lead">
-            Enter 3 of your competitors' Facebook Pages below. Get a full breakdown of their active Facebook & Instagram ads, copy hooks, and scaled winning video formats — plus automated email alerts whenever they upload new ads.
+            Enter up to 3 competitor Facebook Pages below to view 5 sample active ads, copy hooks, and video formats for each brand. Zero signup required to search.
           </p>
 
           <form class="adspy-form card" id="adspyForm" novalidate>
             <div class="form-header">
-              <h3>Competitor Monitoring Setup</h3>
-              <p>Enter up to 3 competitor Facebook Pages or handles you want to track:</p>
+              <h3>Competitor Ad Inspector</h3>
+              <p>Enter 1 to 3 competitor Facebook Pages or handles:</p>
             </div>
 
             <div class="input-group">
               <label for="comp1">Competitor #1 Facebook Page URL or Name *</label>
-              <input type="text" id="comp1" name="comp1" placeholder="e.g. facebook.com/competitorone or Competitor Name" required />
+              <input type="text" id="comp1" name="comp1" placeholder="e.g. facebook.com/competitorone or Brand Name" required />
             </div>
 
             <div class="input-group">
-              <label for="comp2">Competitor #2 Facebook Page URL or Name</label>
+              <label for="comp2">Competitor #2 Facebook Page URL or Name (Optional)</label>
               <input type="text" id="comp2" name="comp2" placeholder="e.g. facebook.com/competitortwo" />
             </div>
 
             <div class="input-group">
-              <label for="comp3">Competitor #3 Facebook Page URL or Name</label>
+              <label for="comp3">Competitor #3 Facebook Page URL or Name (Optional)</label>
               <input type="text" id="comp3" name="comp3" placeholder="e.g. facebook.com/competitorthree" />
-            </div>
-
-            <hr class="form-divider" />
-
-            <div class="form-row-two">
-              <div class="input-group">
-                <label for="userEmail">Your Work Email * (Where we send ad alerts)</label>
-                <input type="email" id="userEmail" name="email" placeholder="you@company.com" required />
-              </div>
-
-              <div class="input-group">
-                <label for="userName">Your Name / Company Name *</label>
-                <input type="text" id="userName" name="name" placeholder="John / Acme Corp" required />
-              </div>
             </div>
 
             <!-- Honeypot -->
             <input type="text" name="website" id="website" class="honeypot" tabindex="-1" autocomplete="off" />
 
-            <button type="submit" class="btn btn-primary btn-large" id="submitBtn">
-              <span class="btn-text">Analyze Ads & Activate Launch Radar ⚡</span>
+            <button type="submit" class="btn btn-primary btn-large" id="submitBtn" style="margin-top: 1rem;">
+              <span class="btn-text">Inspect 5 Sample Ads Per Competitor ⚡</span>
               <span class="spinner hidden"></span>
             </button>
-            <p class="form-note">100% free tool. You will receive an instant analysis breakdown and email alerts whenever your competitors launch new ads.</p>
+            <p class="form-note">Instant search • No email required to view sample ads</p>
             <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
           </form>
         </div>
@@ -110,12 +96,9 @@
         <div class="container">
           <div class="dashboard-header">
             <div>
-              <span class="badge badge-success"><span class="pulse-dot"></span> Radar Active</span>
+              <span class="badge badge-tool"><span class="pulse-dot"></span> Live Analysis</span>
               <h2 style="margin-top: 0.4rem;">Competitor Threat Intelligence Report</h2>
-              <p id="dashboardSubtitle" class="dashboard-subtitle">Real-time analysis of active Meta ads & creative scaling velocity.</p>
-            </div>
-            <div class="monitoring-alert-box">
-              <p>🔔 <strong>Automated Alerts Active:</strong> We'll email <span id="alertTargetEmail">your email</span> daily whenever these competitors publish new ads.</p>
+              <p id="dashboardSubtitle" class="dashboard-subtitle">Real-time analysis of active Meta ads & 5 sample ad creative breakdowns.</p>
             </div>
           </div>
 
@@ -124,9 +107,37 @@
             <!-- Dynamic Metrics Inject Here -->
           </div>
 
+          <!-- OPTIONAL ALERT REGISTRATION BOX -->
+          <div class="card alert-optin-card" id="alertOptinBox" style="margin: 2rem 0; background: linear-gradient(180deg, #111827 0%, #0f172a 100%); border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 0 25px rgba(16, 185, 129, 0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+              <div>
+                <span class="badge badge-success"><span class="pulse-dot"></span> Automated Ad Monitoring</span>
+                <h3 style="margin-top: 0.6rem; color: #ffffff;">Want Daily Email Alerts When These Competitors Upload New Ads?</h3>
+                <p style="margin-bottom: 0.5rem; color: #d1d5db;">Register your work email below. Our background scanner will track these competitors daily and email you whenever they publish new ad campaigns.</p>
+              </div>
+            </div>
+
+            <form id="alertOptinForm" style="margin-top: 1rem; display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 0.8rem; align-items: end;">
+              <div class="input-group" style="margin-bottom: 0;">
+                <label for="userEmail" style="font-size: 0.85rem; color: #9ca3af;">Your Work Email *</label>
+                <input type="email" id="userEmail" name="email" placeholder="you@company.com" required style="padding: 0.75rem 0.9rem;" />
+              </div>
+
+              <div class="input-group" style="margin-bottom: 0;">
+                <label for="userName" style="font-size: 0.85rem; color: #9ca3af;">Your Name / Company *</label>
+                <input type="text" id="userName" name="name" placeholder="John / Acme Corp" required style="padding: 0.75rem 0.9rem;" />
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="activateAlertsBtn" style="padding: 0.75rem 1.4rem;">
+                <span>Activate Free Alerts 🔔</span>
+              </button>
+            </form>
+            <p id="alertOptinStatus" class="form-status" style="margin-top: 0.6rem; text-align: left;"></p>
+          </div>
+
           <!-- COMPETITOR BREAKDOWN TABS / SECTIONS -->
           <div class="section-title-wrap">
-            <h3>Competitor Threat Breakdown & Creative Gallery</h3>
+            <h3>Competitor Threat Breakdown & 5 Sample Ads</h3>
           </div>
           <div id="competitorsContainer">
             <!-- Dynamic Competitor Reports Inject Here -->

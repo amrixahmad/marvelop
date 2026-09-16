@@ -7,20 +7,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   const yearNode = document.getElementById('year');
 
   const resultsSection = document.getElementById('resultsSection');
-  const alertTargetEmail = document.getElementById('alertTargetEmail');
   const metricsCards = document.getElementById('metricsCards');
   const competitorsContainer = document.getElementById('competitorsContainer');
+
+  const alertOptinForm = document.getElementById('alertOptinForm');
+  const activateAlertsBtn = document.getElementById('activateAlertsBtn');
+  const alertOptinStatus = document.getElementById('alertOptinStatus');
 
   const authButtons = document.getElementById('auth-buttons');
   const signInBtn = document.getElementById('signInBtn');
   const userButtonNode = document.getElementById('user-button');
+
+  let currentCompetitors = [];
 
   if (yearNode) {
     yearNode.textContent = new Date().getFullYear();
   }
 
   // --- CLERK FRONTEND AUTH INTEGRATION ---
-  const clerkPubKey = "pk_test_dG91Y2hpbmctaG9yc2UtMzI5MS5jbGVyay5hY2NvdW50cy5kZXYk";
   let clerk = window.Clerk;
 
   async function initClerk() {
@@ -35,13 +39,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       if (clerk.user) {
-        // User logged in
         if (authButtons) authButtons.style.display = 'none';
         if (userButtonNode) {
           clerk.mountUserButton(userButtonNode);
         }
 
-        // Auto pre-fill user info if empty
         const emailInput = document.getElementById('userEmail');
         const nameInput = document.getElementById('userName');
         if (emailInput && !emailInput.value) {
@@ -51,7 +53,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           nameInput.value = clerk.user.fullName || clerk.user.firstName || '';
         }
 
-        // Fetch user's saved monitored dashboard from server
         fetchUserSavedDashboard();
       } else {
         if (authButtons) authButtons.style.display = 'inline-block';
@@ -72,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const res = await fetch('/api/me');
       const data = await res.json();
       if (data.authenticated && data.subscriber && data.reports && data.reports.length > 0) {
-        renderDashboard(data, data.subscriber.email);
+        renderDashboard(data);
         if (resultsSection) {
           resultsSection.classList.remove('hidden');
         }
@@ -82,7 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // --- FORM SUBMISSION HANDLER ---
+  // --- TOP SEARCH FORM HANDLER (FREE SEARCH, NO EMAIL REQUIRED) ---
   if (form) {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -95,11 +96,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const comp1 = (document.getElementById('comp1')?.value || '').trim();
       const comp2 = (document.getElementById('comp2')?.value || '').trim();
       const comp3 = (document.getElementById('comp3')?.value || '').trim();
-      const email = (document.getElementById('userEmail')?.value || '').trim();
-      const name = (document.getElementById('userName')?.value || '').trim();
       const website = (document.getElementById('website')?.value || '').trim();
 
-      // Anti-spam check
       if (website) {
         if (statusNode) {
           statusNode.textContent = 'Submission blocked.';
@@ -108,7 +106,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      // Validation
       if (!comp1) {
         if (statusNode) {
           statusNode.textContent = 'Please enter at least 1 competitor Facebook Page URL or name.';
@@ -117,27 +114,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      if (!email || !email.includes('@')) {
-        if (statusNode) {
-          statusNode.textContent = 'Please enter a valid work email address.';
-          statusNode.classList.add('error');
-        }
-        return;
-      }
+      currentCompetitors = [comp1, comp2, comp3].filter(c => c.length > 0);
 
-      if (!name) {
-        if (statusNode) {
-          statusNode.textContent = 'Please enter your name or company name.';
-          statusNode.classList.add('error');
-        }
-        return;
-      }
-
-      const competitors = [comp1, comp2, comp3].filter(c => c.length > 0);
-
-      // UI Loading state
       submitBtn.disabled = true;
-      if (btnText) btnText.textContent = 'Scanning Meta Ad Library & Computing Threat Index...';
+      if (btnText) btnText.textContent = 'Fetching 5 Sample Ads Per Competitor...';
       if (spinner) spinner.classList.remove('hidden');
 
       try {
@@ -147,10 +127,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            name,
-            email,
-            company: name,
-            competitors
+            competitors: currentCompetitors
           })
         });
 
@@ -160,24 +137,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           throw new Error(data.error || 'Failed to analyze competitors.');
         }
 
-        // Render Dashboard
-        renderDashboard(data, email);
+        renderDashboard(data);
 
         if (statusNode) {
-          statusNode.textContent = '✓ Intelligence Radar active & alert monitoring enabled!';
+          statusNode.textContent = '✓ Showing 5 sample ads per competitor!';
           statusNode.classList.add('success');
         }
 
-        // Prompt login/signup modal if user is not logged in yet
-        if (window.Clerk && !window.Clerk.user) {
-          setTimeout(() => {
-            if (window.Clerk) {
-              window.Clerk.openSignUp({});
-            }
-          }, 1500);
-        }
-
-        // Smooth scroll to results
         if (resultsSection) {
           resultsSection.classList.remove('hidden');
           resultsSection.scrollIntoView({ behavior: 'smooth' });
@@ -191,27 +157,95 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } finally {
         submitBtn.disabled = false;
-        if (btnText) btnText.textContent = 'Analyze Ads & Activate Launch Radar ⚡';
+        if (btnText) btnText.textContent = 'Inspect 5 Sample Ads Per Competitor ⚡';
         if (spinner) spinner.classList.add('hidden');
       }
     });
   }
 
-  function renderDashboard(data, email) {
-    if (alertTargetEmail) {
-      alertTargetEmail.textContent = email;
-    }
+  // --- ALERT OPT-IN FORM HANDLER ---
+  if (alertOptinForm) {
+    alertOptinForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
+      if (alertOptinStatus) {
+        alertOptinStatus.textContent = '';
+        alertOptinStatus.className = 'form-status';
+      }
+
+      const email = (document.getElementById('userEmail')?.value || '').trim();
+      const name = (document.getElementById('userName')?.value || '').trim();
+
+      if (!email || !email.includes('@')) {
+        if (alertOptinStatus) {
+          alertOptinStatus.textContent = 'Please enter a valid work email address.';
+          alertOptinStatus.classList.add('error');
+        }
+        return;
+      }
+
+      if (!name) {
+        if (alertOptinStatus) {
+          alertOptinStatus.textContent = 'Please enter your name or company name.';
+          alertOptinStatus.classList.add('error');
+        }
+        return;
+      }
+
+      activateAlertsBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            company: name,
+            competitors: currentCompetitors.length > 0 ? currentCompetitors : ['Competitor Target']
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Failed to activate alerts.');
+        }
+
+        if (alertOptinStatus) {
+          alertOptinStatus.textContent = `✓ Alerts activated for ${email}! We will email you daily when new ads go live.`;
+          alertOptinStatus.classList.add('success');
+        }
+
+        if (window.Clerk && !window.Clerk.user) {
+          setTimeout(() => {
+            window.Clerk.openSignUp({});
+          }, 1200);
+        }
+
+      } catch (err) {
+        if (alertOptinStatus) {
+          alertOptinStatus.textContent = err.message || 'Failed to activate alerts.';
+          alertOptinStatus.classList.add('error');
+        }
+      } finally {
+        activateAlertsBtn.disabled = false;
+      }
+    });
+  }
+
+  function renderDashboard(data) {
     const reports = data.reports || [];
     const summary = data.summary || {};
 
-    // 1. Render Summary Metrics
     if (metricsCards) {
       metricsCards.innerHTML = `
         <article class="card">
-          <span class="eyebrow">Monitored Targets</span>
+          <span class="eyebrow">Inspected Brands</span>
           <h3>${summary.totalCompetitors || reports.length} Competitor Brand(s)</h3>
-          <p>Active daily Meta Ad Library scanner enabled.</p>
+          <p>Displaying 5 active sample ad creatives per brand.</p>
         </article>
 
         <article class="card">
@@ -221,24 +255,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         </article>
 
         <article class="card">
-          <span class="eyebrow">Automated Alerts Status</span>
-          <h3><span class="pulse-dot"></span> 100% Active</h3>
-          <p>We'll notify <strong>${email}</strong> daily upon new ad detection.</p>
+          <span class="eyebrow">Daily Email Alerts</span>
+          <h3>${summary.monitoringActive ? '<span class="pulse-dot"></span> Active ⚡' : 'Optional (Opt-in Below)'}</h3>
+          <p>${summary.monitoringActive ? 'Daily Meta Ad Library updates enabled.' : 'Enter email below to receive daily launch alerts.'}</p>
         </article>
       `;
     }
 
-    // 2. Render Competitors Details
     if (competitorsContainer) {
       competitorsContainer.innerHTML = reports.map((r, idx) => {
-        const adsHtml = (r.ads || []).map((ad, adIdx) => {
+        const adsHtml = (r.ads || []).slice(0, 5).map((ad, adIdx) => {
           const isWinner = ad.isTopPerformer || adIdx === 0;
           return `
             <div class="ad-card">
               <div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span class="ad-format-tag ${ad.format === 'video' ? 'video' : ''}">${ad.format || 'image'}</span>
-                  ${isWinner ? `<span class="badge badge-alert" style="font-size: 0.7rem;">🔥 45+ DAYS SCALED WINNER</span>` : `<span class="badge badge-tool" style="font-size: 0.7rem;">⚡ NEW LAUNCH</span>`}
+                  ${isWinner ? `<span class="badge badge-alert" style="font-size: 0.7rem;">🔥 45+ DAYS SCALED WINNER</span>` : `<span class="badge badge-tool" style="font-size: 0.7rem;">⚡ SAMPLE AD #${adIdx + 1}</span>`}
                 </div>
                 <div class="ad-copy">"${escapeHtml(ad.copy)}"</div>
               </div>
@@ -257,12 +290,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           <article class="card competitor-report-card">
             <div class="competitor-header">
               <div>
-                <span class="eyebrow">Brand Intelligence & Radar</span>
+                <span class="eyebrow">Brand Intelligence</span>
                 <h3 class="competitor-name">${escapeHtml(r.brandName || r.query)}</h3>
               </div>
               <div>
                 <span class="badge badge-alert" style="margin-right: 8px;">Threat Score: ${threatScore}/100</span>
-                <span class="badge badge-tool">${r.metrics?.activeAdsCount || 6} Active Ads</span>
+                <span class="badge badge-tool">${r.metrics?.activeAdsCount || 8} Active Ads</span>
               </div>
             </div>
 
@@ -279,7 +312,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               </ul>
             </div>
 
-            <h4 style="margin: 1.2rem 0 0.5rem; color: #ffffff;">Active Ad Creatives:</h4>
+            <h4 style="margin: 1.2rem 0 0.5rem; color: #ffffff;">5 Sample Ad Creatives:</h4>
             <div class="ad-grid">
               ${adsHtml}
             </div>

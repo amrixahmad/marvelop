@@ -69,11 +69,7 @@ app.post('/api/analyze', async (req, res) => {
   try {
     const auth = getAuth(req);
     const userId = auth?.userId;
-    const { name, email, company, competitors } = req.body;
-
-    if (!email || !email.includes('@')) {
-      return res.status(400).json({ error: 'A valid work email is required.' });
-    }
+    const { name, email, company, competitors, enableAlerts } = req.body;
 
     if (!competitors || !Array.isArray(competitors) || competitors.filter(c => c && c.trim()).length === 0) {
       return res.status(400).json({ error: 'Please provide at least one competitor Facebook Page URL or name.' });
@@ -83,10 +79,7 @@ app.post('/api/analyze', async (req, res) => {
       .filter(c => typeof c === 'string' && c.trim().length > 0)
       .slice(0, 3);
 
-    // Save subscriber & competitor URLs to SQLite database, linking Clerk User ID if authenticated
-    const subscriber = saveSubscriber(email, name, company, cleanCompetitors, userId);
-
-    // Run Scraper Engine in parallel for all competitors
+    // Run Scraper Engine in parallel for all 3 competitors (5 sample ads each)
     const scrapingPromises = cleanCompetitors.map(c => scrapeCompetitor(c));
     const results = await Promise.all(scrapingPromises);
     const reports = results.filter(Boolean);
@@ -98,14 +91,20 @@ app.post('/api/analyze', async (req, res) => {
       }
     }
 
-    // Trigger async email confirmation via Resend & lead sync via MailerLite
-    sendWelcomeAlertConfirmation(email, name, company, cleanCompetitors).catch(err => {
-      console.error('Resend background error:', err);
-    });
+    let subscriber = null;
 
-    syncLeadToMailerLite({ email, name, company }).catch(err => {
-      console.error('MailerLite sync background error:', err);
-    });
+    // If user provided email or requested alert monitoring, register them in DB & send welcome email
+    if (email && email.includes('@')) {
+      subscriber = saveSubscriber(email, name || '', company || name || '', cleanCompetitors, userId);
+
+      sendWelcomeAlertConfirmation(email, name, company, cleanCompetitors).catch(err => {
+        console.error('Resend background error:', err);
+      });
+
+      syncLeadToMailerLite({ email, name, company }).catch(err => {
+        console.error('MailerLite sync background error:', err);
+      });
+    }
 
     return res.json({
       success: true,
@@ -116,7 +115,7 @@ app.post('/api/analyze', async (req, res) => {
         totalCompetitors: reports.length,
         totalActiveAdsAnalyzed: reports.reduce((acc, r) => acc + (r.metrics?.activeAdsCount || 0), 0),
         primaryMarket: 'Malaysia (MY)',
-        monitoringActive: true
+        monitoringActive: !!subscriber
       }
     });
   } catch (error) {
