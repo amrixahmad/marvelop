@@ -352,21 +352,6 @@ p {
   gap: var(--space-md);
 }
 
-.monitoring-alert-box {
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-radius: var(--radius);
-  padding: var(--space-md) var(--space-lg);
-  max-width: 440px;
-  box-shadow: 0 0 20px var(--accent-glow);
-}
-
-.monitoring-alert-box p {
-  margin: 0;
-  font-size: 0.95rem;
-  color: #a7f3d0;
-}
-
 .cards {
   display: grid;
   gap: var(--space-lg);
@@ -403,19 +388,65 @@ p {
 
 .ad-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-md);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-lg);
   margin-top: var(--space-md);
 }
 
 .ad-card {
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: var(--space-md);
   background: #0b0f19;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  overflow: hidden;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.ad-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+/* AD CREATIVE MEDIA PREVIEW */
+.ad-media-container {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: var(--space-sm);
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ad-media-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(11,15,25,0.85) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-badge {
+  background: rgba(6, 182, 212, 0.85);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 16px var(--primary-glow);
 }
 
 .ad-format-tag {
@@ -446,6 +477,7 @@ p {
   padding: var(--space-xs) var(--space-sm);
   border-radius: 6px;
   border-left: 3px solid var(--primary);
+  line-height: 1.5;
 }
 
 .ad-footer {
@@ -455,6 +487,24 @@ p {
   font-size: 0.85rem;
   color: var(--muted);
   font-family: monospace;
+  margin-bottom: var(--space-xs);
+}
+
+.ad-meta-link {
+  font-size: 0.82rem;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 0.4rem;
+  transition: color 0.2s;
+}
+
+.ad-meta-link:hover {
+  color: #38bdf8;
+  text-decoration: underline;
 }
 
 /* AGENCY CTA CARD */

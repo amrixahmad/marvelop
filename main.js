@@ -266,18 +266,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       competitorsContainer.innerHTML = reports.map((r, idx) => {
         const adsHtml = (r.ads || []).slice(0, 5).map((ad, adIdx) => {
           const isWinner = ad.isTopPerformer || adIdx === 0;
+          const isVideo = ad.format === 'video';
+          const mediaThumbnail = ad.mediaUrl || "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=600&q=80";
+          const libUrl = ad.adLibraryUrl || `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(r.brandName || r.query)}`;
+
           return `
             <div class="ad-card">
               <div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span class="ad-format-tag ${ad.format === 'video' ? 'video' : ''}">${ad.format || 'image'}</span>
+                <div class="ad-media-container" style="background-image: url('${mediaThumbnail}');">
+                  <div class="ad-media-overlay">
+                    ${isVideo ? `<span class="play-badge">▶ Play Video Creative</span>` : `<span class="badge badge-tool" style="background: rgba(0,0,0,0.7); color: #fff;">📸 Image Creative</span>`}
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                  <span class="ad-format-tag ${isVideo ? 'video' : ''}">${ad.format || 'image'}</span>
                   ${isWinner ? `<span class="badge badge-alert" style="font-size: 0.7rem;">🔥 45+ DAYS SCALED WINNER</span>` : `<span class="badge badge-tool" style="font-size: 0.7rem;">⚡ SAMPLE AD #${adIdx + 1}</span>`}
                 </div>
                 <div class="ad-copy">"${escapeHtml(ad.copy)}"</div>
               </div>
-              <div class="ad-footer">
-                <span>First Seen: <strong>${ad.startDate || 'Recently'}</strong></span>
-                <span>CTA: <strong>${ad.ctaText || 'Learn More'}</strong></span>
+              <div>
+                <div class="ad-footer">
+                  <span>First Seen: <strong>${ad.startDate || 'Recently'}</strong></span>
+                  <span>CTA: <strong>${ad.ctaText || 'Learn More'}</strong></span>
+                </div>
+                <div style="text-align: right;">
+                  <a class="ad-meta-link" href="${libUrl}" target="_blank" rel="noreferrer">
+                    🔗 View Live on Meta Ad Library →
+                  </a>
+                </div>
               </div>
             </div>
           `;
@@ -285,6 +302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const hooksHtml = (r.topHooks || []).map(h => `<li>${escapeHtml(h)}</li>`).join('');
         const threatScore = 70 + ((idx * 9) % 25);
+        const directLibPageUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(r.brandName || r.query)}`;
 
         return `
           <article class="card competitor-report-card">
@@ -295,7 +313,9 @@ document.addEventListener('DOMContentLoaded', async () => {
               </div>
               <div>
                 <span class="badge badge-alert" style="margin-right: 8px;">Threat Score: ${threatScore}/100</span>
-                <span class="badge badge-tool">${r.metrics?.activeAdsCount || 8} Active Ads</span>
+                <a class="btn btn-outline" href="${directLibPageUrl}" target="_blank" rel="noreferrer" style="padding: 0.35rem 0.85rem; font-size: 0.8rem;">
+                  Open Meta Ad Library ↗
+                </a>
               </div>
             </div>
 
@@ -312,7 +332,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               </ul>
             </div>
 
-            <h4 style="margin: 1.2rem 0 0.5rem; color: #ffffff;">5 Sample Ad Creatives:</h4>
+            <h4 style="margin: 1.2rem 0 0.5rem; color: #ffffff;">5 Sample Ad Creatives & Visual Content:</h4>
             <div class="ad-grid">
               ${adsHtml}
             </div>
