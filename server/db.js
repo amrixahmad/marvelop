@@ -15,6 +15,7 @@ const db = new DatabaseSync(dbPath);
 db.exec(`
   CREATE TABLE IF NOT EXISTS subscribers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    clerk_user_id TEXT UNIQUE,
     email TEXT UNIQUE NOT NULL,
     name TEXT,
     company TEXT,
@@ -43,19 +44,22 @@ db.exec(`
   );
 `);
 
-function saveSubscriber(email, name, company, competitorUrls = []) {
+function saveSubscriber(email, name, company, competitorUrls = [], clerkUserId = null) {
   let subscriber;
   try {
     const insertStmt = db.prepare(`
-      INSERT INTO subscribers (email, name, company)
-      VALUES (?, ?, ?)
-      ON CONFLICT(email) DO UPDATE SET name=excluded.name, company=excluded.company
-      RETURNING id, email, name, company
+      INSERT INTO subscribers (email, name, company, clerk_user_id)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(email) DO UPDATE SET 
+        name=excluded.name, 
+        company=excluded.company,
+        clerk_user_id=COALESCE(excluded.clerk_user_id, subscribers.clerk_user_id)
+      RETURNING id, email, name, company, clerk_user_id
     `);
-    subscriber = insertStmt.get(email, name || '', company || '');
+    subscriber = insertStmt.get(email, name || '', company || '', clerkUserId || null);
   } catch (err) {
-    const getStmt = db.prepare(`SELECT * FROM subscribers WHERE email = ?`);
-    subscriber = getStmt.get(email);
+    const getStmt = db.prepare(`SELECT * FROM subscribers WHERE email = ? OR clerk_user_id = ?`);
+    subscriber = getStmt.get(email, clerkUserId || email);
   }
 
   if (subscriber && Array.isArray(competitorUrls)) {
@@ -76,6 +80,19 @@ function saveSubscriber(email, name, company, competitorUrls = []) {
   }
 
   return subscriber;
+}
+
+function getSubscriberByClerkIdOrEmail(clerkUserId, email) {
+  if (clerkUserId) {
+    const stmt = db.prepare(`SELECT * FROM subscribers WHERE clerk_user_id = ?`);
+    const sub = stmt.get(clerkUserId);
+    if (sub) return sub;
+  }
+  if (email) {
+    const stmt = db.prepare(`SELECT * FROM subscribers WHERE email = ?`);
+    return stmt.get(email);
+  }
+  return null;
 }
 
 function saveAds(pageName, ads = []) {
@@ -117,6 +134,7 @@ function getMonitoredPagesForSubscriber(subscriberId) {
 module.exports = {
   db,
   saveSubscriber,
+  getSubscriberByClerkIdOrEmail,
   saveAds,
   getAllSubscribers,
   getMonitoredPagesForSubscriber

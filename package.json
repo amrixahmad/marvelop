@@ -9,7 +9,9 @@
     "dev": "node --watch server/index.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "cors": "^2.8.5"
+    "@clerk/express": "^2.1.69",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2"
   }
 }

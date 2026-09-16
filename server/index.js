@@ -1,7 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { saveSubscriber, saveAds } = require('./db');
+const { clerkMiddleware, getAuth } = require('@clerk/express');
+const { saveSubscriber, getSubscriberByClerkIdOrEmail, getMonitoredPagesForSubscriber, saveAds } = require('./db');
 const { scrapeCompetitor } = require('./scraper');
 const { sendWelcomeAlertConfirmation } = require('./resend');
 const { syncLeadToMailerLite } = require('./mailerlite');
@@ -13,6 +15,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Apply Clerk Auth Middleware
+app.use(clerkMiddleware({
+  publishableKey: process.env.CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+  secretKey: process.env.CLERK_SECRET_KEY
+}));
+
 // Serve static frontend assets
 app.use(express.static(path.join(__dirname, '..')));
 
@@ -21,9 +29,46 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Get Current User Profile & Saved Monitored Competitors
+app.get('/api/me', async (req, res) => {
+  try {
+    const auth = getAuth(req);
+    const userId = auth?.userId;
+
+    if (!userId) {
+      return res.json({ authenticated: false });
+    }
+
+    const subscriber = getSubscriberByClerkIdOrEmail(userId, null);
+    if (!subscriber) {
+      return res.json({ authenticated: true, subscriber: null, monitoredCompetitors: [] });
+    }
+
+    const pages = getMonitoredPagesForSubscriber(subscriber.id);
+    const competitors = pages.map(p => p.page_name);
+
+    let reports = [];
+    if (competitors.length > 0) {
+      reports = await Promise.all(competitors.map(c => scrapeCompetitor(c)));
+    }
+
+    return res.json({
+      authenticated: true,
+      subscriber,
+      monitoredCompetitors: competitors,
+      reports: reports.filter(Boolean)
+    });
+  } catch (error) {
+    console.error('Error in /api/me:', error);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
 // Main Analysis & Monitoring Signup API Endpoint
 app.post('/api/analyze', async (req, res) => {
   try {
+    const auth = getAuth(req);
+    const userId = auth?.userId;
     const { name, email, company, competitors } = req.body;
 
     if (!email || !email.includes('@')) {
@@ -38,14 +83,12 @@ app.post('/api/analyze', async (req, res) => {
       .filter(c => typeof c === 'string' && c.trim().length > 0)
       .slice(0, 3);
 
-    // Save subscriber & competitor URLs to SQLite database
-    const subscriber = saveSubscriber(email, name, company, cleanCompetitors);
+    // Save subscriber & competitor URLs to SQLite database, linking Clerk User ID if authenticated
+    const subscriber = saveSubscriber(email, name, company, cleanCompetitors, userId);
 
-    // Run Scraper Engine in parallel for all 3 competitors
+    // Run Scraper Engine in parallel for all competitors
     const scrapingPromises = cleanCompetitors.map(c => scrapeCompetitor(c));
     const results = await Promise.all(scrapingPromises);
-
-    // Filter valid result objects
     const reports = results.filter(Boolean);
 
     // Save extracted ads into DB

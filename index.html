@@ -22,6 +22,14 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+
+    <!-- Clerk Auth JS SDK -->
+    <script
+      async
+      crossorigin="anonymous"
+      data-clerk-publishable-key="pk_test_dG91Y2hpbmctaG9yc2UtMzI5MS5jbGVyay5hY2NvdW50cy5kZXYk"
+      src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+    ></script>
   </head>
   <body>
     <header class="site-header">
@@ -29,7 +37,13 @@
         <div class="brand" aria-label="Marvelop AdSpy">
           <img class="brand-logo" src="marvelop logo 360x80.png" alt="Marvelop AdSpy" />
         </div>
-        <span class="badge badge-tool">Meta Ads Intelligence Tool</span>
+        <div class="nav-auth-wrap">
+          <span class="badge badge-tool">Meta Ads Intelligence Tool</span>
+          <div id="auth-buttons" style="display: inline-block; margin-left: 12px;">
+            <button class="btn btn-outline" id="signInBtn" style="padding: 0.4rem 0.9rem; font-size: 0.88rem;">Sign In</button>
+          </div>
+          <div id="user-button" style="display: inline-block; margin-left: 12px;"></div>
+        </div>
       </div>
     </header>
 
