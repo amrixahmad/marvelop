@@ -25,32 +25,56 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // --- CLERK FRONTEND AUTH INTEGRATION ---
-  let clerk = window.Clerk;
+  if (signInBtn) {
+    signInBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        if (window.Clerk) {
+          if (!window.Clerk.loaded) {
+            await window.Clerk.load();
+          }
+          window.Clerk.openSignIn({});
+        } else {
+          // If script is still downloading, wait briefly
+          let attempts = 0;
+          const waitInterval = setInterval(async () => {
+            attempts++;
+            if (window.Clerk) {
+              clearInterval(waitInterval);
+              if (!window.Clerk.loaded) await window.Clerk.load();
+              window.Clerk.openSignIn({});
+            } else if (attempts > 20) {
+              clearInterval(waitInterval);
+              console.warn('Clerk SDK could not be loaded.');
+            }
+          }, 100);
+        }
+      } catch (err) {
+        console.error('Error opening sign in:', err);
+      }
+    });
+  }
 
   async function initClerk() {
-    if (!clerk) return;
+    if (!window.Clerk) return;
     try {
-      await clerk.load();
-
-      if (signInBtn) {
-        signInBtn.addEventListener('click', () => {
-          clerk.openSignIn({});
-        });
+      if (!window.Clerk.loaded) {
+        await window.Clerk.load();
       }
 
-      if (clerk.user) {
+      if (window.Clerk.user) {
         if (authButtons) authButtons.style.display = 'none';
         if (userButtonNode) {
-          clerk.mountUserButton(userButtonNode);
+          window.Clerk.mountUserButton(userButtonNode);
         }
 
         const emailInput = document.getElementById('userEmail');
         const nameInput = document.getElementById('userName');
         if (emailInput && !emailInput.value) {
-          emailInput.value = clerk.user.primaryEmailAddress?.emailAddress || '';
+          emailInput.value = window.Clerk.user.primaryEmailAddress?.emailAddress || '';
         }
         if (nameInput && !nameInput.value) {
-          nameInput.value = clerk.user.fullName || clerk.user.firstName || '';
+          nameInput.value = window.Clerk.user.fullName || window.Clerk.user.firstName || '';
         }
 
         fetchUserSavedDashboard();
@@ -65,7 +89,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (window.Clerk) {
     initClerk();
   } else {
-    window.addEventListener('load', initClerk);
+    window.addEventListener('load', () => initClerk());
+    // Polling fallback in case load event already fired
+    let pollCount = 0;
+    const clerkTimer = setInterval(() => {
+      pollCount++;
+      if (window.Clerk) {
+        clearInterval(clerkTimer);
+        initClerk();
+      } else if (pollCount > 30) {
+        clearInterval(clerkTimer);
+      }
+    }, 150);
   }
 
   async function fetchUserSavedDashboard() {
