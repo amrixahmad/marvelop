@@ -10,12 +10,17 @@ const {
   getMonitoredPagesForSubscriber, 
   saveAds, 
   getTierLimits,
-  updateUserTier
+  updateUserTier,
+  addMonitoredCompetitor,
+  removeMonitoredCompetitor,
+  getSavedSwipeAds,
+  saveAdToSwipeFile,
+  removeAdFromSwipeFile
 } = require('./db');
 const { scrapeCompetitor } = require('./scraper');
 const { sendWelcomeAlertConfirmation } = require('./resend');
 const { syncLeadToMailerLite } = require('./mailerlite');
-const { sanitizeAndDeduplicateCompetitors, validateEmail, validateName } = require('./validator');
+const { sanitizeAndDeduplicateCompetitors, validateAndCleanCompetitor, validateEmail, validateName } = require('./validator');
 const { createCheckoutSession, handleStripeWebhook, TIER_PRICING } = require('./stripe');
 
 const app = express();
@@ -100,12 +105,14 @@ app.get('/api/me', async (req, res) => {
         authenticated: true, 
         subscriber: null, 
         monitoredCompetitors: [],
+        swipeAds: [],
         tierInfo: { tier: userTier, limits, slotsUsed: 0, slotsTotal: limits.maxCompetitors }
       });
     }
 
     const pages = getMonitoredPagesForSubscriber(subscriber.id);
     const competitors = pages.map(p => p.page_name);
+    const swipeAds = getSavedSwipeAds(subscriber.id);
 
     let reports = [];
     if (competitors.length > 0) {
@@ -125,6 +132,8 @@ app.get('/api/me', async (req, res) => {
       authenticated: true,
       subscriber,
       monitoredCompetitors: competitors,
+      monitoredPages: pages,
+      swipeAds,
       tierInfo: {
         tier: userTier,
         limits,
@@ -136,6 +145,135 @@ app.get('/api/me', async (req, res) => {
   } catch (error) {
     console.error('Error in /api/me:', error);
     res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
+// Add Competitor Slot (Protected)
+app.post('/api/competitors', async (req, res) => {
+  try {
+    const auth = getAuth(req);
+    const userId = auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required to manage slots.' });
+    }
+
+    const subscriber = getSubscriberByClerkIdOrEmail(userId, null);
+    if (!subscriber) {
+      return res.status(404).json({ error: 'User profile not found.' });
+    }
+
+    const userTier = subscriber.tier || 'free';
+    const limits = getTierLimits(userTier);
+    const currentPages = getMonitoredPagesForSubscriber(subscriber.id);
+
+    if (currentPages.length >= limits.maxCompetitors) {
+      return res.status(403).json({ 
+        error: `Slot limit reached (${limits.maxCompetitors} max for ${limits.tierName}). Please upgrade your plan to add more competitors.` 
+      });
+    }
+
+    const validation = validateAndCleanCompetitor(req.body.competitor);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error });
+    }
+
+    const newPage = addMonitoredCompetitor(subscriber.id, validation.handle);
+    const report = await scrapeCompetitor(validation.handle);
+
+    res.json({ success: true, page: newPage, report });
+  } catch (err) {
+    console.error('Add competitor error:', err);
+    res.status(500).json({ error: 'Failed to add competitor slot' });
+  }
+});
+
+// Remove Competitor Slot (Protected)
+app.delete('/api/competitors/:idOrName', async (req, res) => {
+  try {
+    const auth = getAuth(req);
+    const userId = auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required.' });
+    }
+
+    const subscriber = getSubscriberByClerkIdOrEmail(userId, null);
+    if (!subscriber) {
+      return res.status(404).json({ error: 'User profile not found.' });
+    }
+
+    const removed = removeMonitoredCompetitor(subscriber.id, req.params.idOrName);
+    res.json({ success: removed });
+  } catch (err) {
+    console.error('Delete competitor error:', err);
+    res.status(500).json({ error: 'Failed to remove competitor' });
+  }
+});
+
+// Swipe File: Get Saved Ads
+app.get('/api/swipe-file', async (req, res) => {
+  try {
+    const auth = getAuth(req);
+    const userId = auth?.userId;
+    if (!userId) return res.json({ swipeAds: [] });
+
+    const subscriber = getSubscriberByClerkIdOrEmail(userId, null);
+    if (!subscriber) return res.json({ swipeAds: [] });
+
+    const swipeAds = getSavedSwipeAds(subscriber.id);
+    res.json({ swipeAds });
+  } catch (err) {
+    console.error('Swipe file read error:', err);
+    res.status(500).json({ error: 'Failed to fetch swipe file' });
+  }
+});
+
+// Swipe File: Save Ad
+app.post('/api/swipe-file', async (req, res) => {
+  try {
+    const auth = getAuth(req);
+    const userId = auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Please sign in to save ads to your swipe file.' });
+    }
+
+    const subscriber = getSubscriberByClerkIdOrEmail(userId, null);
+    if (!subscriber) {
+      return res.status(404).json({ error: 'User profile not found.' });
+    }
+
+    const userTier = subscriber.tier || 'free';
+    const limits = getTierLimits(userTier);
+    const currentSwipe = getSavedSwipeAds(subscriber.id);
+
+    if (currentSwipe.length >= limits.maxSwipeAds) {
+      return res.status(403).json({ 
+        error: `Swipe file limit reached (${limits.maxSwipeAds} max for ${limits.tierName}). Please upgrade to save more ads.` 
+      });
+    }
+
+    const savedAd = saveAdToSwipeFile(subscriber.id, req.body);
+    res.json({ success: true, ad: savedAd });
+  } catch (err) {
+    console.error('Save ad error:', err);
+    res.status(500).json({ error: 'Failed to save ad to swipe file' });
+  }
+});
+
+// Swipe File: Delete Saved Ad
+app.delete('/api/swipe-file/:id', async (req, res) => {
+  try {
+    const auth = getAuth(req);
+    const userId = auth?.userId;
+    if (!userId) return res.status(401).json({ error: 'Authentication required.' });
+
+    const subscriber = getSubscriberByClerkIdOrEmail(userId, null);
+    if (!subscriber) return res.status(404).json({ error: 'User profile not found.' });
+
+    const removed = removeAdFromSwipeFile(subscriber.id, req.params.id);
+    res.json({ success: removed });
+  } catch (err) {
+    console.error('Delete swipe error:', err);
+    res.status(500).json({ error: 'Failed to delete saved ad' });
   }
 });
 

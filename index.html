@@ -112,14 +112,15 @@
       <!-- RESULTS DASHBOARD SECTION -->
       <section class="section dashboard-section hidden" id="resultsSection">
         <div class="container">
+          <!-- DASHBOARD HEADER -->
           <div class="dashboard-header">
             <div>
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.4rem;">
-                <span class="badge badge-tool"><span class="pulse-dot"></span> Live Analysis</span>
+                <span class="badge badge-tool"><span class="pulse-dot"></span> Intelligence Hub</span>
                 <span id="tierBadgeHeader" class="badge badge-success">Free Tier</span>
               </div>
-              <h2>Competitor Threat Intelligence Report</h2>
-              <p id="dashboardSubtitle" class="dashboard-subtitle">Real-time analysis of active Meta ads & sample ad creative breakdowns.</p>
+              <h2 style="margin-bottom: 0.2rem;">Competitor Intelligence Dashboard</h2>
+              <p id="dashboardSubtitle" class="dashboard-subtitle" style="margin-bottom: 0;">Real-time analysis of active Meta ads & competitive creative radar.</p>
             </div>
             <div style="text-align: right;">
               <button class="btn btn-outline open-upgrade-btn" style="border-color: var(--primary); color: var(--primary);">
@@ -128,48 +129,138 @@
             </div>
           </div>
 
-          <!-- SUMMARY METRICS CARDS -->
-          <div class="cards three-up" id="metricsCards">
-            <!-- Dynamic Metrics Inject Here -->
+          <!-- DASHBOARD TABS NAVIGATION -->
+          <div class="dashboard-tabs-nav">
+            <button class="dash-tab-btn active" data-tab="matrix">🎯 Radar Matrix</button>
+            <button class="dash-tab-btn" data-tab="archive">🗂️ Ad Archive & Filter</button>
+            <button class="dash-tab-btn" data-tab="swipe">🔖 Ad Swipe File (<span id="swipeCountBadge">0</span>)</button>
+            <button class="dash-tab-btn" data-tab="reports">📄 Client Reports</button>
           </div>
 
-          <!-- OPTIONAL ALERT REGISTRATION BOX -->
-          <div class="card alert-optin-card" id="alertOptinBox" style="margin: 2rem 0; background: linear-gradient(180deg, #111827 0%, #0f172a 100%); border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 0 25px rgba(16, 185, 129, 0.1);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
-              <div>
-                <span class="badge badge-success"><span class="pulse-dot"></span> Automated Ad Monitoring</span>
-                <h3 style="margin-top: 0.6rem; color: #ffffff;">Want Weekly Email Alerts When These Competitors Upload New Ads?</h3>
-                <p style="margin-bottom: 0.5rem; color: #d1d5db;">Register your work email below. We'll track these competitors and email you whenever they publish new ad campaigns.</p>
+          <!-- TAB 1: RADAR MATRIX VIEW -->
+          <div class="dash-tab-content" id="tabContentMatrix">
+            <!-- SUMMARY METRICS CARDS -->
+            <div class="cards three-up" id="metricsCards">
+              <!-- Dynamic Metrics Inject Here -->
+            </div>
+
+            <!-- SLOT MANAGER FOR LOGGED IN USERS -->
+            <div class="card slot-manager-card" id="slotManagerBox" style="margin: 2rem 0;">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: var(--space-sm); margin-bottom: var(--space-md);">
+                <div>
+                  <h3 style="margin-bottom: 0.2rem; color: #ffffff;">Monitored Competitor Slots</h3>
+                  <p style="font-size: 0.88rem; margin: 0; color: #9ca3af;" id="slotUsageText">Manage your saved competitor slots.</p>
+                </div>
+                <button class="btn btn-outline open-upgrade-btn" style="font-size: 0.8rem; padding: 0.35rem 0.8rem;">
+                  + Get More Slots
+                </button>
+              </div>
+              <div id="monitoredSlotsGrid" class="slots-pill-grid">
+                <!-- Dynamic slot pills inject here -->
               </div>
             </div>
 
-            <form id="alertOptinForm" style="margin-top: 1rem; display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 0.8rem; align-items: end;">
-              <div class="input-group" style="margin-bottom: 0;">
-                <label for="userEmail" style="font-size: 0.85rem; color: #9ca3af;">Your Work Email *</label>
-                <input type="email" id="userEmail" name="email" placeholder="you@company.com" required style="padding: 0.75rem 0.9rem;" />
+            <!-- OPTIONAL ALERT REGISTRATION BOX (FOR GUESTS) -->
+            <div class="card alert-optin-card" id="alertOptinBox" style="margin: 2rem 0; background: linear-gradient(180deg, #111827 0%, #0f172a 100%); border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 0 25px rgba(16, 185, 129, 0.1);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                  <span class="badge badge-success"><span class="pulse-dot"></span> Automated Ad Monitoring</span>
+                  <h3 style="margin-top: 0.6rem; color: #ffffff;">Want Weekly Email Alerts When These Competitors Upload New Ads?</h3>
+                  <p style="margin-bottom: 0.5rem; color: #d1d5db;">Register your work email below. We'll track these competitors and email you whenever they publish new ad campaigns.</p>
+                </div>
               </div>
 
-              <div class="input-group" style="margin-bottom: 0;">
-                <label for="userName" style="font-size: 0.85rem; color: #9ca3af;">Your Name / Company *</label>
-                <input type="text" id="userName" name="name" placeholder="John / Acme Corp" required style="padding: 0.75rem 0.9rem;" />
-              </div>
+              <form id="alertOptinForm" style="margin-top: 1rem; display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 0.8rem; align-items: end;">
+                <div class="input-group" style="margin-bottom: 0;">
+                  <label for="userEmail" style="font-size: 0.85rem; color: #9ca3af;">Your Work Email *</label>
+                  <input type="email" id="userEmail" name="email" placeholder="you@company.com" required style="padding: 0.75rem 0.9rem;" />
+                </div>
 
-              <button type="submit" class="btn btn-primary" id="activateAlertsBtn" style="padding: 0.75rem 1.4rem;">
-                <span>Activate Free Alerts 🔔</span>
+                <div class="input-group" style="margin-bottom: 0;">
+                  <label for="userName" style="font-size: 0.85rem; color: #9ca3af;">Your Name / Company *</label>
+                  <input type="text" id="userName" name="name" placeholder="John / Acme Corp" required style="padding: 0.75rem 0.9rem;" />
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="activateAlertsBtn" style="padding: 0.75rem 1.4rem;">
+                  <span>Activate Free Alerts 🔔</span>
+                </button>
+              </form>
+              <p id="alertOptinStatus" class="form-status" style="margin-top: 0.6rem; text-align: left;"></p>
+            </div>
+
+            <!-- COMPETITOR BREAKDOWN CARDS -->
+            <div class="section-title-wrap" style="display: flex; justify-content: space-between; align-items: center;">
+              <h3>Competitor Threat Breakdown & Sample Ads</h3>
+              <button class="btn btn-outline open-upgrade-btn" style="font-size: 0.82rem; padding: 0.35rem 0.8rem;">
+                Unlock Full Ad Archive (Pro) ↗
               </button>
-            </form>
-            <p id="alertOptinStatus" class="form-status" style="margin-top: 0.6rem; text-align: left;"></p>
+            </div>
+            <div id="competitorsContainer">
+              <!-- Dynamic Competitor Reports Inject Here -->
+            </div>
           </div>
 
-          <!-- COMPETITOR BREAKDOWN TABS / SECTIONS -->
-          <div class="section-title-wrap" style="display: flex; justify-content: space-between; align-items: center;">
-            <h3>Competitor Threat Breakdown & Sample Ads</h3>
-            <button class="btn btn-outline open-upgrade-btn" style="font-size: 0.82rem; padding: 0.35rem 0.8rem;">
-              Unlock Full Ad Archive (Pro) ↗
-            </button>
+          <!-- TAB 2: AD ARCHIVE & FILTER VIEW -->
+          <div class="dash-tab-content hidden" id="tabContentArchive">
+            <div class="archive-controls card" style="margin-bottom: var(--space-xl);">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <!-- Filter Pills -->
+                <div class="filter-pills-wrap">
+                  <button class="filter-pill active" data-filter="all">All Formats</button>
+                  <button class="filter-pill" data-filter="video">🎥 Videos Only</button>
+                  <button class="filter-pill" data-filter="image">📸 Images Only</button>
+                  <button class="filter-pill" data-filter="carousel">🖼️ Carousels</button>
+                </div>
+                <!-- Search Filter -->
+                <div style="flex: 1; max-width: 380px;">
+                  <input type="text" id="adArchiveSearchInput" placeholder="Search copy, hooks, or brand..." style="width: 100%; padding: 0.65rem 1rem; border-radius: 8px; border: 1px solid var(--line); background: #0b0f19; color: #fff; font-size: 0.9rem;" />
+                </div>
+              </div>
+            </div>
+            <div class="ad-grid" id="allAdsArchiveGrid">
+              <!-- Dynamic aggregated ad cards inject here -->
+            </div>
           </div>
-          <div id="competitorsContainer">
-            <!-- Dynamic Competitor Reports Inject Here -->
+
+          <!-- TAB 3: AD SWIPE FILE VIEW -->
+          <div class="dash-tab-content hidden" id="tabContentSwipe">
+            <div class="card" style="margin-bottom: var(--space-xl);">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <h3 style="margin-bottom: 0.2rem; color: #ffffff;">Personal Ad Swipe File</h3>
+                  <p style="margin: 0; color: #9ca3af;" id="swipeCapacityText">Bookmark winning competitor hooks and video ideas for your team.</p>
+                </div>
+                <button class="btn btn-outline open-upgrade-btn" style="font-size: 0.82rem; padding: 0.35rem 0.8rem;">
+                  Expand Swipe Capacity ↗
+                </button>
+              </div>
+            </div>
+            <div class="ad-grid" id="savedSwipeGrid">
+              <!-- Dynamic saved swipe ads inject here -->
+            </div>
+          </div>
+
+          <!-- TAB 4: CLIENT REPORTS VIEW -->
+          <div class="dash-tab-content hidden" id="tabContentReports">
+            <div class="card report-generator-card">
+              <span class="badge badge-tool">⚡ Pro / Agency Feature</span>
+              <h3 style="margin-top: 0.8rem; color: #ffffff;">Generate Branded Competitor Intelligence Report</h3>
+              <p style="color: #cbd5e1; max-width: 680px;">Export a clean, white-label PDF/CSV teardown of all tracked competitor ads, active lifespans, and messaging angles to present directly to clients or team leadership.</p>
+
+              <div style="background: #0b0f19; border: 1px solid var(--line); border-radius: 8px; padding: var(--space-lg); margin: var(--space-lg) 0;">
+                <h4 style="margin-bottom: 0.5rem; color: var(--primary);">Included in Report:</h4>
+                <ul class="trust-list" style="color: #e5e7eb;">
+                  <li>Active Ad Longevity Rankings (Top Scaled Winning Creatives)</li>
+                  <li>Video vs. Static Image Format Ratio Distribution</li>
+                  <li>Core Hook Angles & Value Proposition Breakdown</li>
+                  <li>Direct Meta Ad Library Reference Verification Links</li>
+                </ul>
+              </div>
+
+              <div id="reportActionBox">
+                <!-- Replaced dynamically based on tier -->
+              </div>
+            </div>
           </div>
 
           <!-- MARVELOP AGENCY CONVERSION CTA -->
@@ -295,7 +386,7 @@
           <div class="modal-tier-options">
             <div class="modal-tier-box">
               <h4>Starter (RM49/mo)</h4>
-              <p>10 Competitor Slots • Daily Alerts • 30-Day History</p>
+              <p>10 Competitor Slots • Daily Alerts • 30-Day History • 25 Saved Ads</p>
               <button class="btn btn-outline checkout-btn" data-tier="starter" style="width: 100%; margin-top: 0.8rem;">Select Starter</button>
             </div>
             <div class="modal-tier-box featured">

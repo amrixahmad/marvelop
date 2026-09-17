@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const competitorsContainer = document.getElementById('competitorsContainer');
   const tierBadgeHeader = document.getElementById('tierBadgeHeader');
   const formSlotPill = document.getElementById('formSlotPill');
+  const swipeCountBadge = document.getElementById('swipeCountBadge');
+  const slotUsageText = document.getElementById('slotUsageText');
+  const monitoredSlotsGrid = document.getElementById('monitoredSlotsGrid');
 
   const alertOptinForm = document.getElementById('alertOptinForm');
   const activateAlertsBtn = document.getElementById('activateAlertsBtn');
@@ -34,14 +37,59 @@ document.addEventListener('DOMContentLoaded', async () => {
   const addSlotBtn = document.getElementById('addSlotBtn');
   const extraSlotsContainer = document.getElementById('extraSlotsContainer');
 
+  // Dashboard Tabs & Content
+  const dashTabBtns = document.querySelectorAll('.dash-tab-btn');
+  const tabContentMatrix = document.getElementById('tabContentMatrix');
+  const tabContentArchive = document.getElementById('tabContentArchive');
+  const tabContentSwipe = document.getElementById('tabContentSwipe');
+  const tabContentReports = document.getElementById('tabContentReports');
+  const allAdsArchiveGrid = document.getElementById('allAdsArchiveGrid');
+  const savedSwipeGrid = document.getElementById('savedSwipeGrid');
+  const swipeCapacityText = document.getElementById('swipeCapacityText');
+  const reportActionBox = document.getElementById('reportActionBox');
+  const filterPills = document.querySelectorAll('.filter-pill');
+  const adArchiveSearchInput = document.getElementById('adArchiveSearchInput');
+
   let currentCompetitors = [];
-  let userTierInfo = { tier: 'guest', limits: { maxCompetitors: 3, maxAdsPerBrand: 5 } };
+  let currentReports = [];
+  let currentSavedSwipeAds = [];
+  let userTierInfo = { tier: 'guest', limits: { maxCompetitors: 3, maxAdsPerBrand: 5, maxSwipeAds: 0 } };
   let currentBillingCycle = 'monthly';
   let slotCount = 3;
+  let activeFormatFilter = 'all';
+  let archiveSearchQuery = '';
 
   if (yearNode) {
     yearNode.textContent = new Date().getFullYear();
   }
+
+  // --- DASHBOARD TAB SWITCHING ---
+  dashTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetTab = btn.getAttribute('data-tab');
+      dashTabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (tabContentMatrix) tabContentMatrix.classList.add('hidden');
+      if (tabContentArchive) tabContentArchive.classList.add('hidden');
+      if (tabContentSwipe) tabContentSwipe.classList.add('hidden');
+      if (tabContentReports) tabContentReports.classList.add('hidden');
+
+      if (targetTab === 'matrix' && tabContentMatrix) tabContentMatrix.classList.remove('hidden');
+      if (targetTab === 'archive' && tabContentArchive) {
+        tabContentArchive.classList.remove('hidden');
+        renderArchiveView();
+      }
+      if (targetTab === 'swipe' && tabContentSwipe) {
+        tabContentSwipe.classList.remove('hidden');
+        renderSwipeFileView();
+      }
+      if (targetTab === 'reports' && tabContentReports) {
+        tabContentReports.classList.remove('hidden');
+        renderReportsView();
+      }
+    });
+  });
 
   // --- BILLING TOGGLE (MONTHLY VS YEARLY) ---
   if (pricingBillingToggle) {
@@ -129,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // --- DYNAMIC EXTRA SLOTS HANDLER ---
+  // --- DYNAMIC EXTRA SLOTS IN HERO FORM ---
   if (addSlotBtn && extraSlotsContainer) {
     addSlotBtn.addEventListener('click', () => {
       const maxAllowed = userTierInfo.limits.maxCompetitors;
@@ -200,7 +248,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         userTierInfo = data.tierInfo;
         updateTierUI(data.tierInfo);
       }
+      if (data.swipeAds) {
+        currentSavedSwipeAds = data.swipeAds;
+        if (swipeCountBadge) swipeCountBadge.textContent = currentSavedSwipeAds.length;
+      }
       if (data.authenticated && data.subscriber && data.reports && data.reports.length > 0) {
+        currentReports = data.reports;
+        currentCompetitors = data.monitoredCompetitors || [];
         renderDashboard(data);
         if (resultsSection) {
           resultsSection.classList.remove('hidden');
@@ -220,7 +274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // --- TOP SEARCH FORM HANDLER (FREE SEARCH, NO EMAIL REQUIRED) ---
+  // --- TOP SEARCH FORM HANDLER ---
   if (form) {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -259,12 +313,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         const response = await fetch('/api/analyze', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            competitors: currentCompetitors
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ competitors: currentCompetitors })
         });
 
         const data = await response.json();
@@ -278,6 +328,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           updateTierUI(data.tierInfo);
         }
 
+        currentReports = data.reports || [];
         renderDashboard(data);
 
         if (statusNode) {
@@ -338,9 +389,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         const response = await fetch('/api/analyze', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name,
             email,
@@ -382,11 +431,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // --- RENDER MAIN RADAR MATRIX VIEW ---
   function renderDashboard(data) {
     const reports = data.reports || [];
     const summary = data.summary || {};
     const tierInfo = data.tierInfo || userTierInfo;
 
+    // 1. Summary Metrics
     if (metricsCards) {
       metricsCards.innerHTML = `
         <article class="card">
@@ -409,6 +460,67 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
     }
 
+    // 2. Monitored Slots Manager Grid
+    if (monitoredSlotsGrid) {
+      const monitoredList = data.monitoredCompetitors || currentCompetitors;
+      if (slotUsageText) {
+        slotUsageText.textContent = `${monitoredList.length} of ${tierInfo.limits?.maxCompetitors || 5} slots used (${tierInfo.limits?.tierName || 'Free'}).`;
+      }
+
+      const slotsHtml = monitoredList.map(comp => `
+        <div class="slot-pill">
+          <span>🎯 ${escapeHtml(comp)}</span>
+          <button class="slot-delete-btn" data-comp="${escapeHtml(comp)}" title="Remove Slot">&times;</button>
+        </div>
+      `).join('');
+
+      monitoredSlotsGrid.innerHTML = `
+        ${slotsHtml}
+        <div class="add-slot-input-wrap">
+          <input type="text" id="inlineAddSlotInput" placeholder="+ Add handle..." />
+          <button class="btn btn-outline" id="inlineAddSlotBtn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">Add</button>
+        </div>
+      `;
+
+      // Attach delete handlers
+      monitoredSlotsGrid.querySelectorAll('.slot-delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const compName = btn.getAttribute('data-comp');
+          if (confirm(`Remove ${compName} from your monitored slots?`)) {
+            await fetch(`/api/competitors/${encodeURIComponent(compName)}`, { method: 'DELETE' });
+            fetchUserSavedDashboard();
+          }
+        });
+      });
+
+      // Attach inline add handler
+      const inlineAddBtn = document.getElementById('inlineAddSlotBtn');
+      const inlineAddInp = document.getElementById('inlineAddSlotInput');
+      if (inlineAddBtn && inlineAddInp) {
+        inlineAddBtn.addEventListener('click', async () => {
+          const val = inlineAddInp.value.trim();
+          if (!val) return;
+          if (monitoredList.length >= tierInfo.limits.maxCompetitors) {
+            if (upgradeModal) upgradeModal.classList.remove('hidden');
+            return;
+          }
+          const res = await fetch('/api/competitors', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ competitor: val })
+          });
+          if (res.ok) {
+            inlineAddInp.value = '';
+            fetchUserSavedDashboard();
+          } else {
+            const errData = await res.json();
+            alert(errData.error || 'Failed to add slot.');
+          }
+        });
+      }
+    }
+
+    // 3. Competitor Reports Matrix
     if (competitorsContainer) {
       competitorsContainer.innerHTML = reports.map((r, idx) => {
         const adsHtml = (r.ads || []).map((ad, adIdx) => {
@@ -416,6 +528,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const isVideo = ad.format === 'video';
           const mediaThumbnail = ad.mediaUrl || "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=600&q=80";
           const libUrl = ad.adLibraryUrl || `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(r.brandName || r.query)}`;
+          const isSaved = currentSavedSwipeAds.some(s => s.ad_id === ad.id);
 
           return `
             <div class="ad-card">
@@ -437,9 +550,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                   <span>First Seen: <strong>${ad.startDate || 'Recently'}</strong></span>
                   <span>CTA: <strong>${ad.ctaText || 'Learn More'}</strong></span>
                 </div>
-                <div style="text-align: right;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                  <button class="save-swipe-btn ${isSaved ? 'saved' : ''}" data-ad-id="${ad.id}" data-brand="${escapeHtml(r.brandName || r.query)}" data-copy="${escapeHtml(ad.copy)}" data-media="${mediaThumbnail}" data-format="${ad.format || 'image'}">
+                    ${isSaved ? '✓ Saved in Swipe' : '🔖 Save to Swipe'}
+                  </button>
                   <a class="ad-meta-link" href="${libUrl}" target="_blank" rel="noreferrer">
-                    🔗 View Live on Meta Ad Library →
+                    🔗 Meta Ad Library →
                   </a>
                 </div>
               </div>
@@ -486,7 +602,236 @@ document.addEventListener('DOMContentLoaded', async () => {
           </article>
         `;
       }).join('');
+
+      attachSwipeButtons();
     }
+  }
+
+  // --- RENDER AD ARCHIVE VIEW (SEARCH & FILTER) ---
+  function renderArchiveView() {
+    if (!allAdsArchiveGrid) return;
+
+    let allAds = [];
+    currentReports.forEach(r => {
+      (r.ads || []).forEach(ad => {
+        allAds.push({
+          ...ad,
+          brandName: r.brandName || r.query
+        });
+      });
+    });
+
+    if (activeFormatFilter !== 'all') {
+      allAds = allAds.filter(a => a.format === activeFormatFilter);
+    }
+
+    if (archiveSearchQuery) {
+      const q = archiveSearchQuery.toLowerCase();
+      allAds = allAds.filter(a => 
+        (a.copy || '').toLowerCase().includes(q) || 
+        (a.brandName || '').toLowerCase().includes(q)
+      );
+    }
+
+    if (allAds.length === 0) {
+      allAdsArchiveGrid.innerHTML = `
+        <div class="card" style="grid-column: 1 / -1; text-align: center; padding: var(--space-2xl);">
+          <p style="color: #9ca3af; margin: 0;">No ads found matching your filter criteria.</p>
+        </div>
+      `;
+      return;
+    }
+
+    allAdsArchiveGrid.innerHTML = allAds.map((ad, idx) => {
+      const isVideo = ad.format === 'video';
+      const isWinner = ad.isTopPerformer || idx === 0;
+      const mediaThumbnail = ad.mediaUrl || "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=600&q=80";
+      const libUrl = ad.adLibraryUrl || `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(ad.brandName)}`;
+      const isSaved = currentSavedSwipeAds.some(s => s.ad_id === ad.id);
+
+      return `
+        <div class="ad-card">
+          <div>
+            <div class="ad-media-container" style="background-image: url('${mediaThumbnail}');">
+              <div class="ad-media-overlay">
+                ${isVideo ? `<span class="play-badge">▶ Play Video</span>` : `<span class="badge badge-tool" style="background: rgba(0,0,0,0.7); color: #fff;">📸 Image</span>`}
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span class="eyebrow" style="margin: 0; font-size: 0.75rem;">${escapeHtml(ad.brandName)}</span>
+              ${isWinner ? `<span class="badge badge-alert" style="font-size: 0.7rem;">🔥 WINNER</span>` : `<span class="ad-format-tag">${ad.format || 'image'}</span>`}
+            </div>
+            <div class="ad-copy">"${escapeHtml(ad.copy)}"</div>
+          </div>
+          <div>
+            <div class="ad-footer">
+              <span>First Seen: <strong>${ad.startDate || 'Recently'}</strong></span>
+              <span>CTA: <strong>${ad.ctaText || 'Learn More'}</strong></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+              <button class="save-swipe-btn ${isSaved ? 'saved' : ''}" data-ad-id="${ad.id}" data-brand="${escapeHtml(ad.brandName)}" data-copy="${escapeHtml(ad.copy)}" data-media="${mediaThumbnail}" data-format="${ad.format || 'image'}">
+                ${isSaved ? '✓ Saved' : '🔖 Save'}
+              </button>
+              <a class="ad-meta-link" href="${libUrl}" target="_blank" rel="noreferrer">
+                🔗 Meta Ad Library →
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    attachSwipeButtons();
+  }
+
+  // --- FILTER PILL & SEARCH HANDLERS ---
+  filterPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      filterPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      activeFormatFilter = pill.getAttribute('data-filter') || 'all';
+      renderArchiveView();
+    });
+  });
+
+  if (adArchiveSearchInput) {
+    adArchiveSearchInput.addEventListener('input', (e) => {
+      archiveSearchQuery = e.target.value.trim();
+      renderArchiveView();
+    });
+  }
+
+  // --- RENDER SWIPE FILE VIEW ---
+  function renderSwipeFileView() {
+    if (!savedSwipeGrid) return;
+
+    if (swipeCapacityText) {
+      swipeCapacityText.textContent = `You have saved ${currentSavedSwipeAds.length} of ${userTierInfo.limits.maxSwipeAds || 5} allowed ads (${userTierInfo.limits.tierName}).`;
+    }
+
+    if (currentSavedSwipeAds.length === 0) {
+      savedSwipeGrid.innerHTML = `
+        <div class="card" style="grid-column: 1 / -1; text-align: center; padding: var(--space-3xl);">
+          <h3 style="color: #ffffff;">Your Ad Swipe File is Empty</h3>
+          <p style="color: #9ca3af; max-width: 480px; margin: 0 auto 1.5rem;">Click the <strong>🔖 Save to Swipe</strong> button on any competitor ad to bookmark creative hooks and video angles for your team.</p>
+          <button class="btn btn-primary" id="goToArchiveBtn">Browse Competitor Ads</button>
+        </div>
+      `;
+      document.getElementById('goToArchiveBtn')?.addEventListener('click', () => {
+        document.querySelector('[data-tab="archive"]')?.click();
+      });
+      return;
+    }
+
+    savedSwipeGrid.innerHTML = currentSavedSwipeAds.map(s => `
+      <div class="ad-card">
+        <div>
+          <div class="ad-media-container" style="background-image: url('${s.media_url || "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=600&q=80"}');"></div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span class="eyebrow" style="margin: 0; font-size: 0.8rem;">${escapeHtml(s.brand_name)}</span>
+            <span class="badge badge-tool">${s.format || 'image'}</span>
+          </div>
+          <div class="ad-copy">"${escapeHtml(s.copy)}"</div>
+        </div>
+        <div>
+          <div class="ad-footer" style="margin-top: 0.5rem;">
+            <span>Saved: <strong>${(s.saved_at || '').split('T')[0] || 'Recently'}</strong></span>
+            <button class="btn-text-link delete-swipe-btn" data-swipe-id="${s.id}" style="color: var(--alert); background: none; border: none; cursor: pointer; font-size: 0.8rem;">
+              ✕ Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    savedSwipeGrid.querySelectorAll('.delete-swipe-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const swipeId = btn.getAttribute('data-swipe-id');
+        await fetch(`/api/swipe-file/${swipeId}`, { method: 'DELETE' });
+        currentSavedSwipeAds = currentSavedSwipeAds.filter(s => s.id !== Number(swipeId));
+        if (swipeCountBadge) swipeCountBadge.textContent = currentSavedSwipeAds.length;
+        renderSwipeFileView();
+      });
+    });
+  }
+
+  // --- RENDER REPORTS VIEW ---
+  function renderReportsView() {
+    if (!reportActionBox) return;
+
+    if (userTierInfo.limits.canExport) {
+      reportActionBox.innerHTML = `
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <button class="btn btn-primary" id="downloadPdfBtn" style="padding: 0.9rem 1.8rem;">
+            📄 Download Client Teardown PDF
+          </button>
+          <span style="color: var(--accent); font-size: 0.88rem; font-weight: 600;">✓ Ready to Export (${currentReports.length} Competitors Included)</span>
+        </div>
+      `;
+      document.getElementById('downloadPdfBtn')?.addEventListener('click', () => {
+        window.print();
+      });
+    } else {
+      reportActionBox.innerHTML = `
+        <div style="background: rgba(244, 63, 94, 0.08); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 8px; padding: var(--space-md); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <strong style="color: #fda4af;">🔒 Client Reports are available on the Pro / Agency Plan (RM99/mo)</strong>
+            <p style="margin: 0.2rem 0 0; font-size: 0.85rem; color: #cbd5e1;">Upgrade to generate white-label PDF reports with 90-day ad histories for your clients.</p>
+          </div>
+          <button class="btn btn-primary open-upgrade-btn" style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">
+            Upgrade to Pro
+          </button>
+        </div>
+      `;
+      reportActionBox.querySelector('.open-upgrade-btn')?.addEventListener('click', () => {
+        if (upgradeModal) upgradeModal.classList.remove('hidden');
+      });
+    }
+  }
+
+  // --- ATTACH SWIPE SAVE HANDLERS ---
+  function attachSwipeButtons() {
+    document.querySelectorAll('.save-swipe-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!window.Clerk || !window.Clerk.user) {
+          if (confirm('Please sign in free to save ads into your personal swipe file!')) {
+            window.Clerk?.openSignUp({});
+          }
+          return;
+        }
+
+        const adId = btn.getAttribute('data-ad-id');
+        const brandName = btn.getAttribute('data-brand');
+        const copy = btn.getAttribute('data-copy');
+        const mediaUrl = btn.getAttribute('data-media');
+        const format = btn.getAttribute('data-format');
+
+        btn.disabled = true;
+        try {
+          const res = await fetch('/api/swipe-file', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adId, brandName, copy, mediaUrl, format })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            btn.classList.add('saved');
+            btn.textContent = '✓ Saved in Swipe';
+            currentSavedSwipeAds.push(data.ad);
+            if (swipeCountBadge) swipeCountBadge.textContent = currentSavedSwipeAds.length;
+          } else {
+            alert(data.error || 'Could not save ad.');
+            if (data.error && data.error.includes('limit')) {
+              if (upgradeModal) upgradeModal.classList.remove('hidden');
+            }
+          }
+        } catch (e) {
+          console.error('Swipe error:', e);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
   }
 
   function escapeHtml(str) {
