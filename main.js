@@ -146,7 +146,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (resultsSection) {
           resultsSection.classList.remove('hidden');
-          resultsSection.scrollIntoView({ behavior: 'smooth' });
+          setTimeout(() => {
+            const scrollTarget = competitorsContainer || resultsSection;
+            scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 50);
         }
 
       } catch (error) {
