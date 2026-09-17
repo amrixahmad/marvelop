@@ -114,7 +114,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      currentCompetitors = [comp1, comp2, comp3].filter(c => c.length > 0);
+      const isLogOrGarbage = (str) => {
+        if (!str) return false;
+        return str.length > 150 || /[\r\n]/.test(str) || /(?:node:internal|SyntaxError|\[err\]|\[inf\]|npm warn|at Object\.|Error:)/i.test(str);
+      };
+
+      if (isLogOrGarbage(comp1) || isLogOrGarbage(comp2) || isLogOrGarbage(comp3)) {
+        if (statusNode) {
+          statusNode.textContent = 'Please enter a valid Facebook Page URL or brand name (e.g. facebook.com/TheLittleGymMalaysia or Nike).';
+          statusNode.classList.add('error');
+        }
+        return;
+      }
+
+      currentCompetitors = [comp1, comp2, comp3]
+        .map(c => c.replace(/[\r\n\t]+/g, ' ').trim().slice(0, 100))
+        .filter(c => c.length > 0);
 
       submitBtn.disabled = true;
       if (btnText) btnText.textContent = 'Scanning Competitor Ads & Creative Hooks...';
@@ -273,12 +288,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Handle 0 Active Ads State
         if (r.hasActiveAds === false || !r.ads || r.ads.length === 0) {
+          const formattedTitle = formatBrandName(r.brandName || r.query);
           return `
             <article class="card competitor-report-card">
               <div class="competitor-header">
                 <div>
                   <span class="eyebrow">Brand Intelligence</span>
-                  <h3 class="competitor-name">${escapeHtml(r.brandName || r.query)}</h3>
+                  <h3 class="competitor-name">${escapeHtml(formattedTitle)}</h3>
                 </div>
                 <div>
                   <span class="badge" style="background: rgba(100, 116, 139, 0.3); color: #94a3b8; margin-right: 8px;">Activity: 0 Active Ads</span>
@@ -292,7 +308,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div style="font-size: 2.2rem; margin-bottom: 0.6rem;">🔍</div>
                 <h4 style="color: #ffffff; margin-bottom: 0.4rem;">No Active Meta Ads Currently Detected</h4>
                 <p style="color: #94a3b8; max-width: 560px; margin: 0 auto 1.2rem; font-size: 0.95rem; line-height: 1.6;">
-                  <strong>${escapeHtml(r.brandName || r.query)}</strong>'s verified page is currently not running any active paid ad campaigns.
+                  <strong>${escapeHtml(formattedTitle)}</strong>'s verified page is currently not running any active paid ad campaigns.
                 </p>
                 <a class="btn btn-primary" href="#alertOptinBox" style="font-size: 0.88rem; padding: 0.6rem 1.2rem;">
                   🔔 Set Up Alert When They Launch New Ads
@@ -349,13 +365,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const hooksHtml = (r.topHooks || []).map(h => `<li>${escapeHtml(h)}</li>`).join('');
         const threatScore = 70 + ((idx * 9) % 25);
         const adCount = (r.ads || []).length;
+        const formattedBrandTitle = formatBrandName(r.brandName || r.query);
 
         return `
           <article class="card competitor-report-card">
             <div class="competitor-header">
               <div>
                 <span class="eyebrow">Brand Intelligence</span>
-                <h3 class="competitor-name">${escapeHtml(r.brandName || r.query)}</h3>
+                <h3 class="competitor-name">${escapeHtml(formattedBrandTitle)}</h3>
               </div>
               <div>
                 <span class="badge badge-alert" style="margin-right: 8px;">Threat Score: ${threatScore}/100</span>
@@ -390,9 +407,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  function formatBrandName(name) {
+    if (!name) return 'Competitor Brand';
+    const trimmed = String(name).replace(/[\r\n\t]+/g, ' ').trim();
+    if (trimmed.length > 50) {
+      return trimmed.slice(0, 47) + '...';
+    }
+    return trimmed;
+  }
+
   function escapeHtml(str) {
     if (!str) return '';
-    return str
+    return String(str)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -400,3 +426,4 @@ document.addEventListener('DOMContentLoaded', async () => {
       .replace(/'/g, "&#039;");
   }
 });
+

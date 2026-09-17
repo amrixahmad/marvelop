@@ -76,13 +76,19 @@ app.post('/api/analyze', async (req, res) => {
     const userId = auth?.userId;
     const { name, email, company, competitors, enableAlerts } = req.body;
 
-    if (!competitors || !Array.isArray(competitors) || competitors.filter(c => c && c.trim()).length === 0) {
+    if (!competitors || !Array.isArray(competitors) || competitors.filter(c => c && typeof c === 'string' && c.trim()).length === 0) {
       return res.status(400).json({ error: 'Please provide at least one competitor Facebook Page URL or name.' });
     }
 
     const cleanCompetitors = competitors
       .filter(c => typeof c === 'string' && c.trim().length > 0)
+      .map(c => c.replace(/[\r\n\t]+/g, ' ').trim().slice(0, 100))
+      .filter(c => c.length > 0 && !/(?:node:internal|SyntaxError|\[err\]|\[inf\]|npm warn|at Object\.)/i.test(c))
       .slice(0, 3);
+
+    if (cleanCompetitors.length === 0) {
+      return res.status(400).json({ error: 'Please enter a valid competitor Facebook Page URL or brand name (e.g. facebook.com/TheLittleGymMalaysia or Nike).' });
+    }
 
     // Run Scraper Engine in parallel for all competitors (5 sample ads each)
     const scrapingPromises = cleanCompetitors.map(c => 
