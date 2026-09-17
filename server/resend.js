@@ -97,6 +97,13 @@ async function sendCompetitorNewAdAlert(email, competitorName, newAdCount = 1) {
     </div>
   `;
 
+  return sendEmailViaResend({
+    to: email,
+    subject: `🚨 Competitor Alert: ${competitorName} launched ${newAdCount} new ad(s)`,
+    html
+  });
+}
+
 async function sendWeeklyCompetitorDigest({ to, name, company, competitorReports = [] }) {
   const competitorsHtml = competitorReports.map((report) => {
     const brandName = report.brandName || report.query || 'Competitor Brand';
