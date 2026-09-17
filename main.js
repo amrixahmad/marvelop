@@ -113,11 +113,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // --- GTM DATALAYER TRACKING HELPER ---
+  function trackEvent(eventName, params = {}) {
+    window.dataLayer = window.dataLayer || [];
+    const payload = {
+      event: eventName,
+      timestamp: new Date().toISOString(),
+      ...params
+    };
+    window.dataLayer.push(payload);
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      console.log(`[Tracking] ${eventName}`, payload);
+    }
+  }
+
   // --- UPGRADE MODAL TRIGGERS ---
+  function openUpgradeModal(triggerSource = 'navigation_button') {
+    if (upgradeModal) upgradeModal.classList.remove('hidden');
+    trackEvent('upgrade_modal_opened', {
+      content_type: 'pricing_modal',
+      source_trigger: triggerSource,
+      current_tier: userTierInfo.tier || 'guest'
+    });
+  }
+
   openUpgradeBtns.forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      if (upgradeModal) upgradeModal.classList.remove('hidden');
+      const triggerSource = btn.getAttribute('data-trigger') || btn.textContent.trim();
+      openUpgradeModal(triggerSource);
     });
   });
 
@@ -143,11 +167,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // --- AGENCY STRATEGY CTAS ---
+  document.querySelectorAll('.agency-contact-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const method = btn.getAttribute('data-method') || 'general';
+      trackEvent('agency_strategy_click', {
+        method: method,
+        cta_location: 'agency_card',
+        destination_url: btn.getAttribute('href') || ''
+      });
+    });
+  });
+
   // --- STRIPE CHECKOUT TRIGGER ---
   checkoutBtns.forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
       const tier = btn.getAttribute('data-tier') || 'starter';
+      const checkoutValue = tier === 'pro'
+        ? (currentBillingCycle === 'yearly' ? 799 : 99)
+        : (currentBillingCycle === 'yearly' ? 399 : 49);
+
+      trackEvent('checkout_initiated', {
+        tier: tier,
+        billing_cycle: currentBillingCycle,
+        value: checkoutValue,
+        currency: 'MYR'
+      });
+
       btn.disabled = true;
       const originalText = btn.textContent;
       btn.textContent = 'Redirecting to Checkout...';
@@ -182,7 +229,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     addSlotBtn.addEventListener('click', () => {
       const maxAllowed = userTierInfo.limits.maxCompetitors;
       if (slotCount >= maxAllowed) {
-        if (upgradeModal) upgradeModal.classList.remove('hidden');
+        openUpgradeModal('hero_extra_slot_limit');
         return;
       }
       slotCount++;
@@ -224,6 +271,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (nameInput && !nameInput.value) {
           nameInput.value = clerk.user.fullName || clerk.user.firstName || '';
         }
+
+        trackEvent('auth_login', {
+          method: 'clerk',
+          user_id: clerk.user.id
+        });
 
         fetchUserSavedDashboard();
       } else {
@@ -306,6 +358,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       currentCompetitors = rawCompetitors;
 
+      trackEvent('competitor_search_initiated', {
+        search_query: currentCompetitors.join(', '),
+        competitor_count: currentCompetitors.length,
+        user_tier: userTierInfo.tier || 'guest'
+      });
+
       submitBtn.disabled = true;
       if (btnText) btnText.textContent = 'Scanning Meta Ad Library & Analyzing...';
       if (spinner) spinner.classList.remove('hidden');
@@ -329,6 +387,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         currentReports = data.reports || [];
+        const totalAds = currentReports.reduce((acc, r) => acc + (r.ads?.length || 0), 0);
+
+        trackEvent('competitor_report_viewed', {
+          content_type: 'competitor_report',
+          competitors_count: currentReports.length,
+          competitors: currentReports.map(r => r.brandName || r.query),
+          total_ads_loaded: totalAds,
+          user_tier: userTierInfo.tier || 'guest'
+        });
+
         renderDashboard(data);
 
         if (statusNode) {
@@ -408,6 +476,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           userTierInfo = data.tierInfo;
           updateTierUI(data.tierInfo);
         }
+
+        trackEvent('alert_lead_subscribed', {
+          company: name,
+          email_domain: email.includes('@') ? email.split('@')[1] : '',
+          tier: 'free_registered',
+          value: 0,
+          currency: 'MYR'
+        });
 
         if (alertOptinStatus) {
           alertOptinStatus.textContent = `✓ Alerts activated for ${email}! You are now on the Free Registered tier (5 competitor slots).`;
@@ -501,7 +577,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const val = inlineAddInp.value.trim();
           if (!val) return;
           if (monitoredList.length >= tierInfo.limits.maxCompetitors) {
-            if (upgradeModal) upgradeModal.classList.remove('hidden');
+            openUpgradeModal('matrix_inline_slot_limit');
             return;
           }
           const res = await fetch('/api/competitors', {
@@ -769,6 +845,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `;
       document.getElementById('downloadPdfBtn')?.addEventListener('click', () => {
+        trackEvent('report_pdf_downloaded', {
+          competitors_count: currentReports.length,
+          tier: userTierInfo.tier || 'pro'
+        });
         window.print();
       });
     } else {
@@ -784,7 +864,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `;
       reportActionBox.querySelector('.open-upgrade-btn')?.addEventListener('click', () => {
-        if (upgradeModal) upgradeModal.classList.remove('hidden');
+        openUpgradeModal('client_reports_tab');
       });
     }
   }
@@ -819,10 +899,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.textContent = '✓ Saved in Swipe';
             currentSavedSwipeAds.push(data.ad);
             if (swipeCountBadge) swipeCountBadge.textContent = currentSavedSwipeAds.length;
+            trackEvent('swipe_ad_bookmarked', {
+              brand_name: brandName,
+              ad_format: format || 'image',
+              ad_id: adId,
+              content_type: 'ad_swipe'
+            });
           } else {
             alert(data.error || 'Could not save ad.');
             if (data.error && data.error.includes('limit')) {
-              if (upgradeModal) upgradeModal.classList.remove('hidden');
+              openUpgradeModal('swipe_capacity_limit');
             }
           }
         } catch (e) {
