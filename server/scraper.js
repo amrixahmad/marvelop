@@ -106,6 +106,43 @@ async function fetchMetaAdLibraryPublic(query) {
 }
 
 /**
+ * Automatically resolve Facebook Page ID and official Display Title from Page URL / Handle
+ */
+function resolveFacebookPageDetails(urlOrHandle) {
+  return new Promise((resolve) => {
+    const clean = cleanPageQuery(urlOrHandle);
+    if (!clean) return resolve({ handle: clean, pageId: null, title: null });
+    
+    const pluginUrl = `https://www.facebook.com/plugins/page.php?href=${encodeURIComponent('https://www.facebook.com/' + clean)}&tabs=timeline`;
+
+    https.get(pluginUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      },
+      timeout: 5000
+    }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        let pageId = null;
+        const idMatches = data.match(/page_id=(\d+)/i) || 
+                          data.match(/\"pageID\"\s*:\s*\"(\d+)\"/i) || 
+                          data.match(/entity_id=(\d+)/i) ||
+                          data.match(/fb:\/\/page\/\?id=(\d+)/i);
+        if (idMatches) pageId = idMatches[1];
+
+        let title = null;
+        const titleMatch = data.match(/<a[^>]+class=\"_8r\"[^>]*>([^<]+)<\/a>/i) ||
+                           data.match(/<a[^>]+href=\"https:\/\/www\.facebook\.com\/[^>]+>([^<]+)<\/a>/i);
+        if (titleMatch) title = titleMatch[1].trim();
+
+        resolve({ handle: clean, pageId, title });
+      });
+    }).on('error', () => resolve({ handle: clean, pageId: null, title: null }));
+  });
+}
+
+/**
  * Tier 2: Apify Meta Ads Scraper (Exact Facebook Page & Keyword Extraction)
  */
 async function fetchApifyMetaScraper(query) {
@@ -114,10 +151,21 @@ async function fetchApifyMetaScraper(query) {
 
   const rawQuery = cleanPageQuery(query);
   const candidates = getSearchCandidates(query);
-  const searchPhrase = candidates[0] || rawQuery;
 
-  // Send ONLY 1 exact target URL per scrape to prevent runaway parallel browser sessions
-  const targetUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(searchPhrase)}&search_type=keyword_exact_phrase`;
+  // Auto-resolve Page ID and Title from Facebook Page URL
+  const pageDetails = await resolveFacebookPageDetails(query);
+  const resolvedPageId = pageDetails.pageId;
+  const resolvedTitle = pageDetails.title;
+
+  let targetUrl;
+  if (resolvedPageId) {
+    // If Page ID is resolved, directly query Facebook's dedicated view_all_page_id URL (100% precision)
+    targetUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=${resolvedPageId}`;
+    console.log(`🎯 Resolved Page ID for [${query}] -> ${resolvedPageId} (${resolvedTitle || 'Page'})`);
+  } else {
+    const searchPhrase = resolvedTitle || candidates[0] || rawQuery;
+    targetUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(searchPhrase)}&search_type=keyword_exact_phrase`;
+  }
 
   return new Promise((resolve) => {
     const postData = JSON.stringify({
