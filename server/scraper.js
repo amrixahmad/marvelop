@@ -295,16 +295,29 @@ async function fetchApifyMetaScraper(query, pageDetails = null) {
               });
             }
 
-            let matchingAds;
+            let matchingAds = [];
 
-            if (resolvedPageId) {
+            if (resolvedPageId && !isPersonalProfileId) {
               // Exact Page ID queries: keep all returned ads belonging to the target advertiser
               matchingAds = validAdItems.filter(item => {
                 const pId = String(item.page_id || item.snapshot?.page_id || '');
-                return !pId || pId === String(resolvedPageId);
+                return pId && pId === String(resolvedPageId);
               });
-              if (matchingAds.length === 0) matchingAds = validAdItems;
-            } else {
+            }
+
+            // If no exact Page ID match or personal profile / keyword search:
+            if (matchingAds.length === 0) {
+              const targetTitleClean = (resolvedTitle || '').toLowerCase().replace(/[\s\-_]+/g, '');
+              
+              if (targetTitleClean && targetTitleClean.length >= 2) {
+                matchingAds = validAdItems.filter(item => {
+                  const pName = (item.page_name || item.snapshot?.page_name || '').toLowerCase().replace(/[\s\-_]+/g, '');
+                  return pName === targetTitleClean || pName.includes(targetTitleClean) || targetTitleClean.includes(pName);
+                });
+              }
+            }
+
+            if (matchingAds.length === 0) {
               // Keyword fallback: Extract significant brand root words (excluding generic region/store words)
               const candidateWords = candidates.flatMap(c => 
                 c.toLowerCase().split(/[\s\-_]+/).filter(w => w.length >= 2 && !['malaysia', 'my', 'official', 'hq', 'global', 'store', 'page'].includes(w))
@@ -320,7 +333,7 @@ async function fetchApifyMetaScraper(query, pageDetails = null) {
             }
 
             if (matchingAds.length === 0) {
-              if (resolvedPageId) {
+              if (resolvedPageId || resolvedTitle) {
                 const brandName = resolvedTitle || candidates[0] || rawQuery;
                 return resolve({
                   success: true,
@@ -345,7 +358,31 @@ async function fetchApifyMetaScraper(query, pageDetails = null) {
               return resolve(null);
             }
 
-            const candidateAds = matchingAds;
+            // Deduplicate ads: filter out duplicate copies or identical media from same campaign variations
+            const seenCopies = new Set();
+            const seenMedia = new Set();
+            const uniqueAds = [];
+
+            for (const item of matchingAds) {
+              const snapshot = item.snapshot || {};
+              const rawCopy = (snapshot.body?.text || snapshot.cards?.[0]?.body || snapshot.title || snapshot.cards?.[0]?.title || '').trim();
+              const copySnippet = rawCopy.slice(0, 80).toLowerCase().replace(/\s+/g, ' ');
+              
+              const mediaUrl = snapshot.videos?.[0]?.video_preview_image_url ||
+                               snapshot.images?.[0]?.resized_image_url ||
+                               snapshot.images?.[0]?.original_image_url ||
+                               snapshot.cards?.[0]?.video_preview_image_url ||
+                               snapshot.cards?.[0]?.resized_image_url || '';
+
+              if (copySnippet && seenCopies.has(copySnippet) && mediaUrl && seenMedia.has(mediaUrl)) {
+                continue; // Skip exact duplicate creative
+              }
+              if (copySnippet) seenCopies.add(copySnippet);
+              if (mediaUrl) seenMedia.add(mediaUrl);
+              uniqueAds.push(item);
+            }
+
+            const candidateAds = uniqueAds.length > 0 ? uniqueAds : matchingAds;
             const primaryPageName = resolvedTitle || candidateAds[0]?.page_name || candidateAds[0]?.snapshot?.page_name || candidates[0] || rawQuery;
 
             const extractedAds = candidateAds.map((item, index) => {
