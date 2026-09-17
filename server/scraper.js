@@ -103,7 +103,10 @@ async function fetchApifyMetaScraper(query) {
       urls: [
         { url: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(searchPhrase)}&search_type=keyword_exact_phrase` }
       ],
-      maxAds: 20
+      maxAds: 20,
+      count: 20,
+      limit: 20,
+      maxItems: 20
     });
 
     const options = {
