@@ -113,9 +113,9 @@ function validateAndCleanCompetitor(input) {
 }
 
 /**
- * Deduplicate and sanitize competitor inputs array
+ * Deduplicate and sanitize competitor inputs array with dynamic max limit
  */
-function sanitizeAndDeduplicateCompetitors(competitorsArray) {
+function sanitizeAndDeduplicateCompetitors(competitorsArray, maxLimit = 3) {
   if (!Array.isArray(competitorsArray)) return { validCompetitors: [], errors: [] };
 
   const validCompetitors = [];
@@ -138,7 +138,7 @@ function sanitizeAndDeduplicateCompetitors(competitorsArray) {
   }
 
   return {
-    validCompetitors: validCompetitors.slice(0, 3),
+    validCompetitors: validCompetitors.slice(0, maxLimit),
     errors
   };
 }

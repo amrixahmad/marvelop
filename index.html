@@ -3,16 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="referrer" content="no-referrer" />
     <title>Marvelop AdSpy | Meta Ads Competitor Threat Radar & Alert Tool</title>
     <meta
       name="description"
-      content="Spy on your competitors' active Facebook & Instagram ads in real-time. View 5 sample ads per competitor and activate automated launch email alerts."
+      content="Spy on your competitors' active Facebook & Instagram ads in real-time. View sample ads, detect winning creatives, and receive automated launch email alerts."
     />
     <meta property="og:title" content="Marvelop AdSpy | Meta Ads Competitor Threat Radar" />
     <meta
       property="og:description"
-      content="Detect competitor Meta ad moves before they steal your market. Get 5 sample active ads, copy hooks analysis, and optional email alerts."
+      content="Detect competitor Meta ad moves before they steal your market. Get active ad breakdowns, copy hooks analysis, and automated email alerts."
     />
     <meta property="og:type" content="website" />
     <link rel="icon" type="image/png" href="marvelop logo 360x80.png" />
@@ -30,7 +29,6 @@
       crossorigin="anonymous"
       data-clerk-publishable-key="pk_test_dG91Y2hpbmctaG9yc2UtMzI5MS5jbGVyay5hY2NvdW50cy5kZXYk"
       src="https://touching-horse-3291.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
-      type="text/javascript"
     ></script>
   </head>
   <body>
@@ -40,54 +38,72 @@
           <img class="brand-logo" src="marvelop logo 360x80.png" alt="Marvelop AdSpy" />
         </div>
         <div class="nav-auth-wrap">
-          <span class="badge badge-tool"><span class="pulse-dot"></span> LIVE THREAT RADAR ACTIVE</span>
+          <nav class="nav-links">
+            <a href="#tool" class="nav-link">Inspector</a>
+            <a href="#pricing" class="nav-link">Pricing</a>
+          </nav>
+          <span class="badge badge-tool"><span class="pulse-dot"></span> RADAR ACTIVE</span>
           <div id="auth-buttons" style="display: inline-block; margin-left: 12px;">
             <button class="btn btn-outline" id="signInBtn" style="padding: 0.4rem 0.9rem; font-size: 0.88rem;">Sign In</button>
           </div>
-          <div id="user-button" style="display: inline-flex; align-items: center; margin-left: 12px;"></div>
+          <div id="user-button" style="display: inline-block; margin-left: 12px;"></div>
         </div>
       </div>
     </header>
 
     <main>
       <!-- HERO & TRACKER INPUT FORM -->
-      <section class="hero reveal">
+      <section class="hero reveal" id="tool">
         <div class="container hero-center">
-          <p class="eyebrow">⚡ Stop Guessing Your Meta Ads Strategy</p>
-          <h1>Unsure What Ads to Run? See What's Already Scaling in Your Market.</h1>
+          <p class="eyebrow">⚡ Free Competitor Meta Ads Inspector</p>
+          <h1>Inspect Competitor Meta Ads Instantly</h1>
           <p class="lead">
-            Don't burn ad budget on blind creative guesses. Instantly reveal the exact video hooks, copy angles, and offers your competitors have been running for 30+ days. Free, live, and zero signup required.
+            Enter up to 3 competitor Facebook Pages below to view sample active ads, copy hooks, and video formats for each brand. Sign up free for 5 slots and weekly tracking.
           </p>
 
           <form class="adspy-form card" id="adspyForm" novalidate>
             <div class="form-header">
-              <h3>Scan Competitor Meta Ads</h3>
-              <p>Paste any competitor Facebook Page URL or Instagram profile link:</p>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin-bottom: 0;">Competitor Ad Inspector</h3>
+                <span id="formSlotPill" class="badge badge-tool" style="font-size: 0.75rem;">3 Free Guest Slots</span>
+              </div>
+              <p style="margin-top: 0.4rem;">Enter 1 to 3 competitor Facebook Pages or handles:</p>
             </div>
 
-            <div class="input-group">
-              <label for="comp1">Competitor #1 (Facebook Page or Instagram Profile) *</label>
-              <input type="text" id="comp1" name="comp1" maxlength="150" placeholder="e.g. facebook.com/TheLittleGymMalaysia or instagram.com/nike" required />
+            <div id="competitorInputList">
+              <div class="input-group">
+                <label for="comp1">Competitor #1 Facebook Page URL or Name *</label>
+                <input type="text" id="comp1" name="comp1" placeholder="e.g. facebook.com/competitorone or Brand Name" required />
+              </div>
+
+              <div class="input-group">
+                <label for="comp2">Competitor #2 Facebook Page URL or Name (Optional)</label>
+                <input type="text" id="comp2" name="comp2" placeholder="e.g. facebook.com/competitortwo" />
+              </div>
+
+              <div class="input-group">
+                <label for="comp3">Competitor #3 Facebook Page URL or Name (Optional)</label>
+                <input type="text" id="comp3" name="comp3" placeholder="e.g. facebook.com/competitorthree" />
+              </div>
             </div>
 
-            <div class="input-group">
-              <label for="comp2">Competitor #2 (Optional)</label>
-              <input type="text" id="comp2" name="comp2" maxlength="150" placeholder="e.g. facebook.com/competitortwo or @brandhandle" />
-            </div>
+            <!-- Dynamic extra slots for registered / paid users -->
+            <div id="extraSlotsContainer"></div>
 
-            <div class="input-group">
-              <label for="comp3">Competitor #3 (Optional)</label>
-              <input type="text" id="comp3" name="comp3" maxlength="150" placeholder="e.g. facebook.com/competitorthree" />
+            <div style="text-align: right; margin-bottom: 0.5rem;">
+              <button type="button" id="addSlotBtn" class="btn-text-link" style="font-size: 0.85rem; color: var(--primary); background: none; border: none; cursor: pointer;">
+                + Add Another Competitor Slot
+              </button>
             </div>
 
             <!-- Honeypot -->
             <input type="text" name="website" id="website" class="honeypot" tabindex="-1" autocomplete="off" />
 
-            <button type="submit" class="btn btn-primary btn-large" id="submitBtn" style="margin-top: 1rem;">
-              <span class="btn-text">Scan Competitor Ads Now ⚡</span>
+            <button type="submit" class="btn btn-primary btn-large" id="submitBtn" style="margin-top: 0.5rem;">
+              <span class="btn-text">Inspect Sample Ads Per Competitor ⚡</span>
               <span class="spinner hidden"></span>
             </button>
-            <p class="form-note">🔒 100% Free & Anonymous • Pulls Live Meta Ad Library Data • No Account Needed</p>
+            <p class="form-note">Instant search • Free forever • No credit card required</p>
             <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
           </form>
         </div>
@@ -98,19 +114,22 @@
         <div class="container">
           <div class="dashboard-header">
             <div>
-              <span class="badge badge-tool"><span class="pulse-dot"></span> Live Analysis</span>
-              <h2 style="margin-top: 0.4rem;">Competitor Threat & Creative Intelligence Report</h2>
-              <p id="dashboardSubtitle" class="dashboard-subtitle">Live analysis of active campaigns, high-converting hooks, and creative formats.</p>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.4rem;">
+                <span class="badge badge-tool"><span class="pulse-dot"></span> Live Analysis</span>
+                <span id="tierBadgeHeader" class="badge badge-success">Free Tier</span>
+              </div>
+              <h2>Competitor Threat Intelligence Report</h2>
+              <p id="dashboardSubtitle" class="dashboard-subtitle">Real-time analysis of active Meta ads & sample ad creative breakdowns.</p>
+            </div>
+            <div style="text-align: right;">
+              <button class="btn btn-outline open-upgrade-btn" style="border-color: var(--primary); color: var(--primary);">
+                ⚡ Upgrade Plan
+              </button>
             </div>
           </div>
 
-          <!-- COMPETITOR BREAKDOWN & SAMPLE ADS DIRECTLY AT TOP -->
-          <div id="competitorsContainer">
-            <!-- Dynamic Competitor Reports Inject Here -->
-          </div>
-
           <!-- SUMMARY METRICS CARDS -->
-          <div class="cards three-up" id="metricsCards" style="margin-top: 2rem;">
+          <div class="cards three-up" id="metricsCards">
             <!-- Dynamic Metrics Inject Here -->
           </div>
 
@@ -118,9 +137,9 @@
           <div class="card alert-optin-card" id="alertOptinBox" style="margin: 2rem 0; background: linear-gradient(180deg, #111827 0%, #0f172a 100%); border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 0 25px rgba(16, 185, 129, 0.1);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
               <div>
-                <span class="badge badge-success"><span class="pulse-dot"></span> 🔔 Zero-Effort Competitor Radar</span>
-                <h3 style="margin-top: 0.6rem; color: #ffffff;">Never Get Blindsided by a Competitor's New Campaign.</h3>
-                <p style="margin-bottom: 0.5rem; color: #d1d5db;">Get instant email notifications the moment your competitors launch new Facebook or Instagram ads. Stay 2 steps ahead of their offers, pricing tests, and copy angles.</p>
+                <span class="badge badge-success"><span class="pulse-dot"></span> Automated Ad Monitoring</span>
+                <h3 style="margin-top: 0.6rem; color: #ffffff;">Want Weekly Email Alerts When These Competitors Upload New Ads?</h3>
+                <p style="margin-bottom: 0.5rem; color: #d1d5db;">Register your work email below. We'll track these competitors and email you whenever they publish new ad campaigns.</p>
               </div>
             </div>
 
@@ -136,52 +155,183 @@
               </div>
 
               <button type="submit" class="btn btn-primary" id="activateAlertsBtn" style="padding: 0.75rem 1.4rem;">
-                <span>Activate Daily Launch Alerts 🔔</span>
+                <span>Activate Free Alerts 🔔</span>
               </button>
             </form>
             <p id="alertOptinStatus" class="form-status" style="margin-top: 0.6rem; text-align: left;"></p>
           </div>
 
+          <!-- COMPETITOR BREAKDOWN TABS / SECTIONS -->
+          <div class="section-title-wrap" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Competitor Threat Breakdown & Sample Ads</h3>
+            <button class="btn btn-outline open-upgrade-btn" style="font-size: 0.82rem; padding: 0.35rem 0.8rem;">
+              Unlock Full Ad Archive (Pro) ↗
+            </button>
+          </div>
+          <div id="competitorsContainer">
+            <!-- Dynamic Competitor Reports Inject Here -->
+          </div>
+
           <!-- MARVELOP AGENCY CONVERSION CTA -->
           <div class="agency-cta-card card">
             <div class="agency-cta-copy">
-              <span class="eyebrow">From Market Baseline to Market Leader</span>
-              <h2>Ready to Turn Competitor Intelligence Into Predictable Revenue?</h2>
-              <p>Tracking competitors gives you the baseline. Out-converting them is where Marvelop comes in. We engineer high-converting Meta ad funnels, profitable creative angles, and qualified sales leads for scaling Malaysian businesses.</p>
+              <span class="eyebrow">Out-Perform Competitor Ads</span>
+              <h2>Want a Meta Ads Strategy That Out-Converts Your Competition?</h2>
+              <p>Knowing what competitors are doing is step 1. Out-performing them with higher lead quality, lower cost per lead, and predictable sales pipeline is where Marvelop comes in.</p>
               <ul class="trust-list">
-                <li><strong>RM39.80 → RM4.07 CPL</strong> (Real case study restructuring for The Little Gym Malaysia)</li>
-                <li><strong>Lead quality filtration</strong> that eliminates junk submissions & tire-kickers</li>
-                <li><strong>High-converting creative production</strong> engineered for Malaysian buyer psychology</li>
+                <li>Sharper audience targeting & offer positioning</li>
+                <li>High-converting landing page CRO</li>
+                <li>Lead quality optimization for Malaysia-based campaigns</li>
               </ul>
             </div>
             <div class="agency-cta-action">
-              <a class="btn btn-primary btn-large" href="https://calendly.com/contact-amriahmad/30min" target="_blank" rel="noreferrer">Book a 30-Min Strategy Session →</a>
-              <p class="agency-cta-note">Exclusively for established businesses spending RM5,000+/mo on Meta ads.</p>
+              <a class="btn btn-primary btn-large" href="https://calendly.com/contact-amriahmad/30min" target="_blank" rel="noreferrer">Request a Free Strategy Review</a>
+              <p class="agency-cta-note">Dedicated for established businesses spending RM5,000+/mo on Meta ads.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- WHY TRACK COMPETITORS (PAIN-TO-SOLUTION METHODOLOGY) -->
-      <section class="section tint reveal" id="agencyReview">
+      <!-- PRICING SECTION -->
+      <section class="section tint reveal" id="pricing">
         <div class="container">
-          <h2>Struggling to Know What Ads to Run? Start With a Market Baseline.</h2>
-          <p class="section-intro">Every month, business owners burn thousands testing blind guesses on Facebook & Instagram. Your top competitors have already spent the budget to test what converts — tracking them gives you the proven baseline.</p>
+          <div class="hero-center" style="margin-bottom: var(--space-2xl);">
+            <p class="eyebrow">Flexible Plans for Growth Advertisers</p>
+            <h2>Simple, Predictable Pricing in Ringgit (MYR)</h2>
+            <p class="lead">Save hours of manual screenshotting and eliminate wasted ad testing budget.</p>
+            
+            <div class="pricing-toggle-wrap">
+              <span id="monthlyToggleLabel" class="pricing-toggle-active">Monthly</span>
+              <label class="switch">
+                <input type="checkbox" id="pricingBillingToggle" />
+                <span class="slider round"></span>
+              </label>
+              <span id="yearlyToggleLabel">Annual <span class="badge badge-success" style="font-size: 0.72rem; padding: 0.15rem 0.5rem;">Save 2 Months Free</span></span>
+            </div>
+          </div>
+
+          <div class="pricing-grid">
+            <!-- FREE REGISTERED PLAN -->
+            <div class="card pricing-card">
+              <div class="pricing-header">
+                <h3>Free Registered</h3>
+                <p>Perfect for solo business owners getting started with competitor tracking.</p>
+                <div class="pricing-amount">
+                  <span class="price-val">RM0</span>
+                  <span class="price-period">/ forever</span>
+                </div>
+              </div>
+              <ul class="pricing-features">
+                <li>✓ <strong>5 Monitored Competitors</strong></li>
+                <li>✓ <strong>10 Sample Ads</strong> per competitor</li>
+                <li>✓ <strong>Weekly Email Digest</strong></li>
+                <li>✓ 14-Day Ad Lifespan Snapshot</li>
+                <li>✓ Basic Copy Hook Breakdown</li>
+                <li class="disabled">✕ Daily Real-time Launch Alerts</li>
+                <li class="disabled">✕ Full 90-Day Ad Archive</li>
+                <li class="disabled">✕ PDF Client Reports</li>
+              </ul>
+              <button class="btn btn-outline btn-large" id="freePlanBtn">Get Started Free</button>
+            </div>
+
+            <!-- STARTER PLAN -->
+            <div class="card pricing-card">
+              <div class="pricing-header">
+                <h3>Starter Plan</h3>
+                <p>For active advertisers who want daily ad launch alerts.</p>
+                <div class="pricing-amount">
+                  <span class="price-val" id="starterPriceVal">RM49</span>
+                  <span class="price-period" id="starterPricePeriod">/ month</span>
+                </div>
+              </div>
+              <ul class="pricing-features">
+                <li>✓ <strong>10 Monitored Competitors</strong></li>
+                <li>✓ <strong>15 Active Ads</strong> per competitor</li>
+                <li>✓ <strong>Daily Launch Email Alerts</strong></li>
+                <li>✓ 30-Day Historical Ad Archive</li>
+                <li>✓ Save up to 25 Ads in Swipe File</li>
+                <li>✓ Scaled Winning Ads Detection</li>
+                <li class="disabled">✕ Unlimited Competitor Slots</li>
+                <li class="disabled">✕ PDF Client Reports</li>
+              </ul>
+              <button class="btn btn-primary btn-large checkout-btn" data-tier="starter">Upgrade to Starter</button>
+            </div>
+
+            <!-- PRO / AGENCY PLAN -->
+            <div class="card pricing-card pricing-card-featured">
+              <div class="featured-badge">MOST POPULAR</div>
+              <div class="pricing-header">
+                <h3>Pro / Agency</h3>
+                <p>For growth brands, marketing teams & media buyers.</p>
+                <div class="pricing-amount">
+                  <span class="price-val" id="proPriceVal">RM99</span>
+                  <span class="price-period" id="proPricePeriod">/ month</span>
+                </div>
+              </div>
+              <ul class="pricing-features">
+                <li>✓ <strong>25 Monitored Competitors</strong></li>
+                <li>✓ <strong>All Active Ads Unlocked</strong> (Full Archive)</li>
+                <li>✓ <strong>Instant Daily Launch Alerts</strong></li>
+                <li>✓ <strong>Full 90+ Day History</strong> (Track Scaled Winners)</li>
+                <li>✓ <strong>Unlimited Ad Swipe File</strong></li>
+                <li>✓ <strong>PDF & CSV Client Report Exports</strong></li>
+                <li>✓ Priority Meta Ads Strategy Review with Marvelop</li>
+              </ul>
+              <button class="btn btn-primary btn-large checkout-btn" data-tier="pro">Upgrade to Pro</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- UPGRADE MODAL -->
+      <div id="upgradeModal" class="modal-overlay hidden">
+        <div class="modal-card card">
+          <div class="modal-header">
+            <h3>⚡ Upgrade Your Marvelop AdSpy Plan</h3>
+            <button class="modal-close-btn" id="closeModalBtn">&times;</button>
+          </div>
+          <p style="color: #cbd5e1; margin-bottom: 1.5rem;">Unlock more competitor tracking slots, full ad archive history, and instant daily new ad alerts.</p>
+          
+          <div class="modal-tier-options">
+            <div class="modal-tier-box">
+              <h4>Starter (RM49/mo)</h4>
+              <p>10 Competitor Slots • Daily Alerts • 30-Day History</p>
+              <button class="btn btn-outline checkout-btn" data-tier="starter" style="width: 100%; margin-top: 0.8rem;">Select Starter</button>
+            </div>
+            <div class="modal-tier-box featured">
+              <div style="color: #facc15; font-size: 0.75rem; font-weight: 800;">RECOMMENDED</div>
+              <h4>Pro / Agency (RM99/mo)</h4>
+              <p>25 Competitor Slots • All Active Ads • 90-Day History • PDF Reports</p>
+              <button class="btn btn-primary checkout-btn" data-tier="pro" style="width: 100%; margin-top: 0.8rem;">Select Pro</button>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem; text-align: center; border-top: 1px solid var(--line); padding-top: 1rem;">
+            <p style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 0.4rem;">Need invoicing or FPX bank transfer?</p>
+            <a href="https://wa.me/60126145179?text=Hi%20Marvelop%2C%20I%20want%20to%20subscribe%20to%20AdSpy%20via%20FPX%20invoicing" target="_blank" rel="noreferrer" style="color: var(--primary); font-size: 0.9rem; font-weight: 600;">
+              💬 Chat with us on WhatsApp for FPX / Invoice
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABOUT MARVELOP -->
+      <section class="section reveal" id="about">
+        <div class="container">
+          <h2>About Marvelop</h2>
+          <p class="section-intro">Marvelop helps established businesses in Malaysia turn Meta ad spend into a stable, high-quality revenue stream through sharper creative testing, funnel strategy, and lead quality optimization.</p>
           <div class="cards three-up">
             <article class="card">
-              <span class="eyebrow" style="color: var(--primary);">01. Stop Blind Guessing</span>
-              <h3>Kill Blank-Page Syndrome</h3>
-              <p>Stuck on what video hook, headline, or pain point to test? Instantly see the exact messaging angles and offers your competitors are scaling with real ad spend right now.</p>
+              <h3>Case Study Result</h3>
+              <p><strong>RM39.80 $\rightarrow$ RM4.07 CPL</strong> for The Little Gym Malaysia within 60 days of campaign restructuring.</p>
             </article>
             <article class="card">
-              <span class="eyebrow" style="color: var(--accent);">02. Benchmark Winning Formats</span>
-              <h3>Know What Formats Convert</h3>
-              <p>Wondering whether to shoot UGC videos, build carousels, or design static graphics? Uncover the exact visual format ratio active in your niche before spending on creative production.</p>
+              <h3>Lead Quality First</h3>
+              <p>We optimize for commercially useful sales conversations, not vanity clicks or fake lead submissions.</p>
             </article>
             <article class="card">
-              <span class="eyebrow" style="color: var(--alert);">03. Model Scaled Winners</span>
-              <h3>Spot 30+ Day Scaled Ads</h3>
-              <p>Nobody keeps an ad running for 45–90+ days unless it makes money. Find their longest-running evergreen ads to understand what Malaysian buyers respond to, then build an offer that out-converts it.</p>
+              <h3>Full Funnel Strategy</h3>
+              <p>Continuous optimization across ad angles, video hooks, landing page conversion, and sales follow-up.</p>
             </article>
           </div>
         </div>
@@ -192,7 +342,11 @@
       <div class="container footer-wrap">
         <div>
           <h2>Marvelop Meta Ads Intelligence & Launch Radar</h2>
-          <p class="fine-print">© <span id="year"></span> Marvelop. All rights reserved. • <a href="privacy.html" style="color: var(--primary);">Privacy Policy</a> • <a href="terms.html" style="color: var(--primary);">Terms & Conditions</a></p>
+          <p class="fine-print">© <span id="year"></span> Marvelop. All rights reserved.</p>
+          <div style="margin-top: 0.5rem;">
+            <a href="privacy.html" style="color: var(--muted); margin-right: 1rem; font-size: 0.85rem;">Privacy Policy</a>
+            <a href="terms.html" style="color: var(--muted); font-size: 0.85rem;">Terms & Conditions</a>
+          </div>
         </div>
         <div class="business-details">
           <p>Compact Ventures Sdn Bhd 199601033428 (405780-T)</p>

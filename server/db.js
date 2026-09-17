@@ -7,6 +7,61 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
+function getTierLimits(tier = 'guest') {
+  switch (tier) {
+    case 'pro':
+      return {
+        tier: 'pro',
+        tierName: 'Pro Plan',
+        priceMYR: 'RM99/mo',
+        maxCompetitors: 25,
+        maxAdsPerBrand: 50,
+        alertFrequency: 'daily',
+        historyDays: 90,
+        canExport: true,
+        badge: '⚡ Pro Plan'
+      };
+    case 'starter':
+      return {
+        tier: 'starter',
+        tierName: 'Starter Plan',
+        priceMYR: 'RM49/mo',
+        maxCompetitors: 10,
+        maxAdsPerBrand: 15,
+        alertFrequency: 'daily',
+        historyDays: 30,
+        canExport: false,
+        badge: '🚀 Starter Plan'
+      };
+    case 'free_registered':
+    case 'free':
+      return {
+        tier: 'free',
+        tierName: 'Free Registered',
+        priceMYR: 'Free',
+        maxCompetitors: 5,
+        maxAdsPerBrand: 10,
+        alertFrequency: 'weekly',
+        historyDays: 14,
+        canExport: false,
+        badge: '👤 Free Member'
+      };
+    case 'guest':
+    default:
+      return {
+        tier: 'guest',
+        tierName: 'Free Guest',
+        priceMYR: 'Free',
+        maxCompetitors: 3,
+        maxAdsPerBrand: 5,
+        alertFrequency: 'none',
+        historyDays: 0,
+        canExport: false,
+        badge: '🆓 Guest'
+      };
+  }
+}
+
 let sqliteDb = null;
 try {
   const { DatabaseSync } = require('node:sqlite');
@@ -22,6 +77,11 @@ try {
         email TEXT UNIQUE NOT NULL,
         name TEXT,
         company TEXT,
+        tier TEXT DEFAULT 'free',
+        subscription_status TEXT DEFAULT 'active',
+        billing_cycle TEXT DEFAULT 'monthly',
+        stripe_customer_id TEXT,
+        stripe_subscription_id TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -53,13 +113,30 @@ try {
         expires_at INTEGER NOT NULL
       );
     `);
-    console.log('📦 Database: Initialized with native node:sqlite');
+
+    // Safe column migrations for existing SQLite databases
+    const columnsToEnsure = [
+      "ALTER TABLE subscribers ADD COLUMN tier TEXT DEFAULT 'free'",
+      "ALTER TABLE subscribers ADD COLUMN subscription_status TEXT DEFAULT 'active'",
+      "ALTER TABLE subscribers ADD COLUMN billing_cycle TEXT DEFAULT 'monthly'",
+      "ALTER TABLE subscribers ADD COLUMN stripe_customer_id TEXT",
+      "ALTER TABLE subscribers ADD COLUMN stripe_subscription_id TEXT"
+    ];
+    for (const sql of columnsToEnsure) {
+      try {
+        sqliteDb.exec(sql);
+      } catch (e) {
+        // Column already exists
+      }
+    }
+
+    console.log('📦 Database: Initialized with native node:sqlite (Tier-enabled)');
   }
 } catch (e) {
   // node:sqlite not present in Node <= 20
 }
 
-// Fallback JSON-backed persistent store for Node environments without node:sqlite
+// Fallback JSON-backed persistent store
 const jsonDbPath = path.join(dataDir, 'marvelop_adspy.json');
 let jsonData = {
   subscribers: [],
@@ -92,20 +169,20 @@ function persistJson() {
   }
 }
 
-function saveSubscriber(email, name, company, competitorUrls = [], clerkUserId = null) {
+function saveSubscriber(email, name, company, competitorUrls = [], clerkUserId = null, tier = 'free') {
   if (sqliteDb) {
     let subscriber;
     try {
       const insertStmt = sqliteDb.prepare(`
-        INSERT INTO subscribers (email, name, company, clerk_user_id)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO subscribers (email, name, company, clerk_user_id, tier)
+        VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(email) DO UPDATE SET 
-          name=excluded.name, 
-          company=excluded.company,
+          name=COALESCE(NULLIF(excluded.name, ''), subscribers.name), 
+          company=COALESCE(NULLIF(excluded.company, ''), subscribers.company),
           clerk_user_id=COALESCE(excluded.clerk_user_id, subscribers.clerk_user_id)
-        RETURNING id, email, name, company, clerk_user_id
+        RETURNING id, email, name, company, clerk_user_id, tier, subscription_status
       `);
-      subscriber = insertStmt.get(email, name || '', company || '', clerkUserId || null);
+      subscriber = insertStmt.get(email, name || '', company || '', clerkUserId || null, tier || 'free');
     } catch (err) {
       const getStmt = sqliteDb.prepare(`SELECT * FROM subscribers WHERE email = ? OR clerk_user_id = ?`);
       subscriber = getStmt.get(email, clerkUserId || email);
@@ -136,6 +213,7 @@ function saveSubscriber(email, name, company, competitorUrls = [], clerkUserId =
     if (name) sub.name = name;
     if (company) sub.company = company;
     if (clerkUserId && !sub.clerk_user_id) sub.clerk_user_id = clerkUserId;
+    if (!sub.tier) sub.tier = tier || 'free';
   } else {
     sub = {
       id: jsonData.nextSubscriberId++,
@@ -143,6 +221,8 @@ function saveSubscriber(email, name, company, competitorUrls = [], clerkUserId =
       email,
       name: name || '',
       company: company || '',
+      tier: tier || 'free',
+      subscription_status: 'active',
       created_at: new Date().toISOString()
     };
     jsonData.subscribers.push(sub);
@@ -191,6 +271,47 @@ function getSubscriberByClerkIdOrEmail(clerkUserId, email) {
   if (email) {
     const sub = jsonData.subscribers.find(s => s.email === email);
     if (sub) return sub;
+  }
+  return null;
+}
+
+function updateUserTier(clerkUserId, email, tier = 'starter', subscriptionData = {}) {
+  const validTiers = ['free', 'starter', 'pro'];
+  if (!validTiers.includes(tier)) tier = 'starter';
+
+  if (sqliteDb) {
+    try {
+      const stmt = sqliteDb.prepare(`
+        UPDATE subscribers 
+        SET tier = ?,
+            subscription_status = ?,
+            billing_cycle = COALESCE(?, billing_cycle),
+            stripe_customer_id = COALESCE(?, stripe_customer_id),
+            stripe_subscription_id = COALESCE(?, stripe_subscription_id)
+        WHERE (clerk_user_id IS NOT NULL AND clerk_user_id = ?) OR email = ?
+        RETURNING *
+      `);
+      return stmt.get(
+        tier,
+        subscriptionData.status || 'active',
+        subscriptionData.billingCycle || null,
+        subscriptionData.customerId || null,
+        subscriptionData.subscriptionId || null,
+        clerkUserId || null,
+        email || null
+      );
+    } catch (e) {
+      console.error('Error updating user tier:', e);
+    }
+  }
+
+  const sub = jsonData.subscribers.find(s => (clerkUserId && s.clerk_user_id === clerkUserId) || (email && s.email === email));
+  if (sub) {
+    sub.tier = tier;
+    sub.subscription_status = subscriptionData.status || 'active';
+    if (subscriptionData.billingCycle) sub.billing_cycle = subscriptionData.billingCycle;
+    persistJson();
+    return sub;
   }
   return null;
 }
@@ -278,7 +399,6 @@ function getCachedAnalysis(queryKey) {
         if (row.expires_at > now) {
           return JSON.parse(row.data_json);
         } else {
-          // Expired, cleanup
           sqliteDb.prepare(`DELETE FROM analysis_cache WHERE query_key = ?`).run(normalizedKey);
         }
       }
@@ -360,8 +480,10 @@ function deleteCachedAnalysis(queryKey) {
 
 module.exports = {
   sqliteDb,
+  getTierLimits,
   saveSubscriber,
   getSubscriberByClerkIdOrEmail,
+  updateUserTier,
   getAllSubscribers,
   saveAds,
   getMonitoredPagesForSubscriber,
@@ -369,4 +491,3 @@ module.exports = {
   setCachedAnalysis,
   deleteCachedAnalysis
 };
-
