@@ -191,21 +191,22 @@ async function fetchApifyMetaScraper(query) {
   const resolvedPageId = pageDetails.pageId;
   const resolvedTitle = pageDetails.title;
 
-  let targetUrl;
+  const targetUrls = [];
   if (resolvedPageId) {
-    // If Page ID is resolved, query view_all_page_id with country=ALL for 100% precision
-    targetUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&view_all_page_id=${resolvedPageId}`;
-    console.log(`🎯 Resolved Page ID for [${query}] -> ${resolvedPageId} (${resolvedTitle || 'Page'})`);
-  } else {
-    const searchPhrase = resolvedTitle || candidates[0] || rawQuery;
-    targetUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(searchPhrase)}&search_type=keyword_exact_phrase`;
+    targetUrls.push({ url: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&view_all_page_id=${resolvedPageId}` });
   }
+  if (resolvedTitle && resolvedTitle.length >= 2) {
+    targetUrls.push({ url: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&q=${encodeURIComponent(resolvedTitle)}&search_type=keyword_exact_phrase` });
+  } else if (!resolvedPageId) {
+    const searchPhrase = candidates[0] || rawQuery;
+    targetUrls.push({ url: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(searchPhrase)}&search_type=keyword_exact_phrase` });
+  }
+
+  console.log(`🎯 Scraping Meta Ad Library for [${query}] -> ${resolvedTitle || 'Page'} (Targets: ${targetUrls.length})`);
 
   return new Promise((resolve) => {
     const postData = JSON.stringify({
-      urls: [
-        { url: targetUrl }
-      ],
+      urls: targetUrls,
       maxAds: 20,
       count: 20,
       limit: 20
