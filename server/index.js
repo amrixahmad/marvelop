@@ -15,11 +15,16 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Apply Clerk Auth Middleware
-app.use(clerkMiddleware({
-  publishableKey: process.env.CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-  secretKey: process.env.CLERK_SECRET_KEY
-}));
+// Apply Clerk Auth Middleware (falls back gracefully if running in local demo mode)
+const clerkPublishableKey = process.env.CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_dG91Y2hpbmctaG9yc2UtMzI5MS5jbGVyay5hY2NvdW50cy5kZXYk';
+const clerkSecretKey = process.env.CLERK_SECRET_KEY || 'sk_test_DipZOEnh0g2592EqpqbxqunsLTELeWoLZdXaBD22o1';
+
+if (clerkPublishableKey) {
+  app.use(clerkMiddleware({
+    publishableKey: clerkPublishableKey,
+    secretKey: clerkSecretKey
+  }));
+}
 
 // Serve static frontend assets
 app.use(express.static(path.join(__dirname, '..')));
