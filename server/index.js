@@ -136,6 +136,9 @@ app.post('/api/analyze', async (req, res) => {
   }
 });
 
+const { startDailyMonitoringCron } = require('./cron');
+
 app.listen(PORT, () => {
   console.log(`🚀 Marvelop AdSpy server running on port ${PORT}`);
+  startDailyMonitoringCron();
 });
