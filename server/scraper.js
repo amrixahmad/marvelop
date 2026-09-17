@@ -1,15 +1,39 @@
 const http = require('http');
 const https = require('https');
+const { getCachedAnalysis, setCachedAnalysis } = require('./db');
 
 /**
- * Clean Facebook Page URL or query into a readable brand handle and search query
+ * Enhanced Facebook / Instagram URL & Handle Sanitizer
+ * Handles: mobile URLs, profile IDs, deep subpaths (/posts, /photos, /about, /reviews), query strings, Instagram profiles
  */
 function cleanPageQuery(input) {
   if (!input) return '';
   let cleaned = input.trim();
-  cleaned = cleaned.replace(/https?:\/\/(www\.|m\.)?facebook\.com\//i, '');
-  cleaned = cleaned.replace(/\/$/, '').replace(/\?.*$/, '');
-  cleaned = cleaned.replace(/pages\/.+?\//i, '');
+
+  // Handle direct numeric profile.php?id=123456
+  const profileIdMatch = cleaned.match(/[?&]id=(\d{6,})/i);
+  if (profileIdMatch) {
+    return profileIdMatch[1];
+  }
+
+  // Handle /pages/Brand-Name/123456789/
+  const pagesIdMatch = cleaned.match(/pages\/[^\/]+\/(\d{6,})/i);
+  if (pagesIdMatch) {
+    return pagesIdMatch[1];
+  }
+
+  // Strip protocol and domain (Facebook & Instagram variations)
+  cleaned = cleaned.replace(/^https?:\/\/(www\.|m\.|web\.|touch\.|l\.)?(facebook\.com|fb\.com|instagram\.com)\//i, '');
+
+  // Strip query parameters and hashes
+  cleaned = cleaned.replace(/[?#].*$/, '');
+
+  // Strip common Facebook subpaths
+  cleaned = cleaned.replace(/\/(posts|photos|videos|reels|about|reviews|community|events|groups|shop|live_videos)(\/.*)?$/i, '');
+
+  // Strip leading and trailing slashes
+  cleaned = cleaned.replace(/^\/+|\/+$/g, '');
+
   return cleaned || input.trim();
 }
 
@@ -33,6 +57,7 @@ function getSearchCandidates(brandQuery) {
   const spaced = cleaned
     .replace(/([0-9]+dB)/ig, '$1 ')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[\-_]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
   
@@ -82,6 +107,7 @@ async function fetchMetaAdLibraryPublic(query) {
             return resolve({
               success: true,
               source: 'meta_direct',
+              hasActiveAds: true,
               adCount: uniqueAds.length,
               ads: uniqueAds.slice(0, 5).map((id, index) => ({
                 id,
@@ -112,6 +138,9 @@ function resolveFacebookPageDetails(urlOrHandle) {
   return new Promise((resolve) => {
     const clean = cleanPageQuery(urlOrHandle);
     if (!clean) return resolve({ handle: clean, pageId: null, title: null });
+
+    // Fast path if handle is already a purely numerical Page ID
+    const isDirectNumeric = /^\d{6,}$/.test(clean);
     
     const pluginUrl = `https://www.facebook.com/plugins/page.php?href=${encodeURIComponent('https://www.facebook.com/' + clean)}&tabs=timeline`;
 
@@ -124,14 +153,16 @@ function resolveFacebookPageDetails(urlOrHandle) {
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {
-        let pageId = null;
-        const idMatches = data.match(/page_id=(\d+)/i) || 
-                          data.match(/\"pageID\"\s*:\s*\"(\d+)\"/i) || 
-                          data.match(/entity_id=(\d+)/i) ||
-                          data.match(/fb:\/\/page\/\?id=(\d+)/i) ||
-                          data.match(/facebook\.com\/(\d{8,})/i) ||
-                          data.match(/profile\.php\?id=(\d+)/i);
-        if (idMatches) pageId = idMatches[1];
+        let pageId = isDirectNumeric ? clean : null;
+        if (!pageId) {
+          const idMatches = data.match(/page_id=(\d+)/i) || 
+                            data.match(/\"pageID\"\s*:\s*\"(\d+)\"/i) || 
+                            data.match(/entity_id=(\d+)/i) ||
+                            data.match(/fb:\/\/page\/\?id=(\d+)/i) ||
+                            data.match(/facebook\.com\/(\d{8,})/i) ||
+                            data.match(/profile\.php\?id=(\d+)/i);
+          if (idMatches) pageId = idMatches[1];
+        }
 
         let title = null;
         const titleMatch = data.match(/title=[\x22\x27]([^\x22\x27<]+)[\x22\x27]/i) ||
@@ -141,7 +172,7 @@ function resolveFacebookPageDetails(urlOrHandle) {
 
         resolve({ handle: clean, pageId, title });
       });
-    }).on('error', () => resolve({ handle: clean, pageId: null, title: null }));
+    }).on('error', () => resolve({ handle: clean, pageId: isDirectNumeric ? clean : null, title: null }));
   });
 }
 
@@ -197,6 +228,30 @@ async function fetchApifyMetaScraper(query) {
       res.on('end', () => {
         try {
           const results = JSON.parse(body);
+
+          // Handle Verified Brand with 0 Active Ads (Do not fallback to mock ads!)
+          if (Array.isArray(results) && results.length === 0 && resolvedPageId) {
+            const brandName = resolvedTitle || candidates[0] || rawQuery;
+            return resolve({
+              success: true,
+              source: 'meta_verified_zero_ads',
+              hasActiveAds: false,
+              brandName,
+              query: rawQuery,
+              pageId: resolvedPageId,
+              metrics: {
+                activeAdsCount: 0,
+                videoPercent: '0%',
+                imagePercent: '0%',
+                avgDaysActive: '0 days',
+                primaryCTA: 'None Active',
+                primaryTargetMarket: 'Malaysia (MY)'
+              },
+              topHooks: [],
+              ads: []
+            });
+          }
+
           if (Array.isArray(results) && results.length > 0) {
             let matchingAds;
 
@@ -297,7 +352,7 @@ async function fetchApifyMetaScraper(query) {
             const videoPercent = Math.round((videoCount / extractedAds.length) * 100);
             const imagePercent = 100 - videoPercent;
 
-            // Extract distinct hook openers from the genuine copy (excluding templated placeholders)
+            // Extract distinct hook openers supporting Unicode (Malay, Chinese, Tamil, English, emojis)
             const allHooks = candidateAds
               .map(item => {
                 let text = item.snapshot?.body?.text || item.snapshot?.title || '';
@@ -306,8 +361,8 @@ async function fetchApifyMetaScraper(query) {
                   .replace(/\{\{\s*product\.name\s*\}\}/gi, 'Featured Offer')
                   .replace(/\{\{[^}]+\}\}/g, '')
                   .trim();
-                const firstSentence = text.split('\n')[0].replace(/^[^\w👶🔥🚀⚡]+/, '').trim();
-                return (firstSentence && firstSentence.length >= 8 && !firstSentence.includes('{{')) 
+                const firstSentence = text.split(/[\n\r]+/)[0].trim();
+                return (firstSentence && firstSentence.length >= 6 && !firstSentence.includes('{{')) 
                   ? `"${firstSentence.substring(0, 110)}${firstSentence.length > 110 ? '...' : ''}"` 
                   : null;
               })
@@ -318,8 +373,10 @@ async function fetchApifyMetaScraper(query) {
             return resolve({
               success: true,
               source: 'apify',
+              hasActiveAds: true,
               brandName: primaryPageName,
               query: rawQuery,
+              pageId: resolvedPageId,
               metrics: {
                 activeAdsCount: matchingAds.length > 0 ? matchingAds.length : results.length,
                 videoPercent: `${videoPercent}%`,
@@ -442,6 +499,7 @@ function generateSynthesizedAnalysis(brandQuery) {
   return {
     success: true,
     source: 'intelligence_engine',
+    hasActiveAds: true,
     brandName: formattedBrand,
     query: cleanBrand,
     metrics: {
@@ -458,17 +516,24 @@ function generateSynthesizedAnalysis(brandQuery) {
 }
 
 /**
- * Main Scraper Master Function
+ * Main Scraper Master Function (with 4-Hour Intelligence Cache)
  */
 async function scrapeCompetitor(inputQuery) {
   const query = cleanPageQuery(inputQuery);
   if (!query) return null;
 
+  // Check 4-Hour Local Cache first
+  const cached = getCachedAnalysis(query);
+  if (cached) {
+    console.log(`⚡ Cache hit for [${query}] (${cached.brandName || 'Brand'})`);
+    return cached;
+  }
+
   // Try Tier 1: Direct Meta Public Fetch
   const tier1Result = await fetchMetaAdLibraryPublic(query);
   if (tier1Result && tier1Result.ads && tier1Result.ads.length > 0) {
     const synth = generateSynthesizedAnalysis(query);
-    return {
+    const result = {
       ...synth,
       source: 'meta_direct',
       metrics: {
@@ -476,21 +541,27 @@ async function scrapeCompetitor(inputQuery) {
         activeAdsCount: Math.max(tier1Result.adCount, synth.metrics.activeAdsCount)
       }
     };
+    setCachedAnalysis(query, result, 14400);
+    return result;
   }
 
   // Try Tier 2: Apify Scraper
   const tier2Result = await fetchApifyMetaScraper(query);
-  if (tier2Result && tier2Result.ads && tier2Result.ads.length > 0) {
+  if (tier2Result) {
+    setCachedAnalysis(query, tier2Result, 14400);
     return tier2Result;
   }
 
   // Tier 3: Intelligent Engine Synthesizer (Fallback)
-  return generateSynthesizedAnalysis(query);
+  const synthResult = generateSynthesizedAnalysis(query);
+  setCachedAnalysis(query, synthResult, 14400);
+  return synthResult;
 }
 
 module.exports = {
   cleanPageQuery,
   getSearchCandidates,
+  resolveFacebookPageDetails,
   scrapeCompetitor
 };
 

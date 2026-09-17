@@ -84,10 +84,17 @@ app.post('/api/analyze', async (req, res) => {
       .filter(c => typeof c === 'string' && c.trim().length > 0)
       .slice(0, 3);
 
-    // Run Scraper Engine in parallel for all 3 competitors (5 sample ads each)
-    const scrapingPromises = cleanCompetitors.map(c => scrapeCompetitor(c));
-    const results = await Promise.all(scrapingPromises);
-    const reports = results.filter(Boolean);
+    // Run Scraper Engine in parallel for all competitors (5 sample ads each)
+    const scrapingPromises = cleanCompetitors.map(c => 
+      scrapeCompetitor(c).catch(err => {
+        console.error(`Error scraping competitor [${c}]:`, err);
+        return null;
+      })
+    );
+    const settledResults = await Promise.allSettled(scrapingPromises);
+    const reports = settledResults
+      .filter(r => r.status === 'fulfilled' && r.value)
+      .map(r => r.value);
 
     // Save extracted ads into DB
     for (const report of reports) {

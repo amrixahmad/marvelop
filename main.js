@@ -267,12 +267,47 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (competitorsContainer) {
       competitorsContainer.innerHTML = reports.map((r, idx) => {
+        const directLibPageUrl = r.pageId 
+          ? `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&view_all_page_id=${r.pageId}`
+          : `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(r.brandName || r.query)}`;
+
+        // Handle 0 Active Ads State
+        if (r.hasActiveAds === false || !r.ads || r.ads.length === 0) {
+          return `
+            <article class="card competitor-report-card">
+              <div class="competitor-header">
+                <div>
+                  <span class="eyebrow">Brand Intelligence</span>
+                  <h3 class="competitor-name">${escapeHtml(r.brandName || r.query)}</h3>
+                </div>
+                <div>
+                  <span class="badge" style="background: rgba(100, 116, 139, 0.3); color: #94a3b8; margin-right: 8px;">Activity: 0 Active Ads</span>
+                  <a class="btn btn-outline" href="${directLibPageUrl}" target="_blank" rel="noreferrer" style="padding: 0.35rem 0.85rem; font-size: 0.8rem;">
+                    Check Meta Ad Library ↗
+                  </a>
+                </div>
+              </div>
+
+              <div style="background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(148, 163, 184, 0.3); border-radius: 10px; padding: 2.2rem 1.5rem; text-align: center; margin-top: 1rem;">
+                <div style="font-size: 2.2rem; margin-bottom: 0.6rem;">🔍</div>
+                <h4 style="color: #ffffff; margin-bottom: 0.4rem;">No Active Meta Ads Currently Detected</h4>
+                <p style="color: #94a3b8; max-width: 560px; margin: 0 auto 1.2rem; font-size: 0.95rem; line-height: 1.6;">
+                  <strong>${escapeHtml(r.brandName || r.query)}</strong>'s verified page is currently not running any active paid ad campaigns.
+                </p>
+                <a class="btn btn-primary" href="#alertOptinBox" style="font-size: 0.88rem; padding: 0.6rem 1.2rem;">
+                  🔔 Set Up Alert When They Launch New Ads
+                </a>
+              </div>
+            </article>
+          `;
+        }
+
         const adsHtml = (r.ads || []).slice(0, 5).map((ad, adIdx) => {
           const isWinner = ad.isTopPerformer || adIdx === 0;
           const isVideo = ad.format === 'video';
           const isCarousel = ad.format === 'carousel';
           const mediaThumbnail = ad.mediaUrl || "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=600&q=80";
-          const libUrl = ad.adLibraryUrl || `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(r.brandName || r.query)}`;
+          const libUrl = ad.adLibraryUrl || directLibPageUrl;
 
           let overlayBadge = `<span class="badge badge-tool" style="background: rgba(0,0,0,0.75); color: #fff;">📸 Image Creative</span>`;
           if (isVideo) {
@@ -313,7 +348,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const hooksHtml = (r.topHooks || []).map(h => `<li>${escapeHtml(h)}</li>`).join('');
         const threatScore = 70 + ((idx * 9) % 25);
-        const directLibPageUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(r.brandName || r.query)}`;
+        const adCount = (r.ads || []).length;
 
         return `
           <article class="card competitor-report-card">
@@ -336,14 +371,16 @@ document.addEventListener('DOMContentLoaded', async () => {
               <div><strong>Primary Target Market:</strong> ${r.metrics?.primaryTargetMarket || 'Malaysia (MY)'}</div>
             </div>
 
+            ${hooksHtml ? `
             <div style="margin-bottom: 1rem;">
               <strong style="color: var(--primary);">Detected Copy Angles & Hooks:</strong>
               <ul style="margin-top: 0.4rem; padding-left: 1.2rem; color: #e2e8f0;">
                 ${hooksHtml}
               </ul>
             </div>
+            ` : ''}
 
-            <h4 style="margin: 1.2rem 0 0.5rem; color: #ffffff;">5 Sample Ad Creatives & Visual Content:</h4>
+            <h4 style="margin: 1.2rem 0 0.5rem; color: #ffffff;">${adCount} Sample Ad Creative(s) & Visual Content:</h4>
             <div class="ad-grid">
               ${adsHtml}
             </div>

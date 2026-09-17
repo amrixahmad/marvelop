@@ -45,6 +45,13 @@ try {
         first_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
         is_active INTEGER DEFAULT 1
       );
+
+      CREATE TABLE IF NOT EXISTS analysis_cache (
+        query_key TEXT PRIMARY KEY,
+        data_json TEXT NOT NULL,
+        cached_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        expires_at INTEGER NOT NULL
+      );
     `);
     console.log('📦 Database: Initialized with native node:sqlite');
   }
@@ -58,6 +65,7 @@ let jsonData = {
   subscribers: [],
   monitored_pages: [],
   competitor_ads: [],
+  analysis_cache: [],
   nextSubscriberId: 1,
   nextPageId: 1,
   nextAdId: 1
@@ -256,11 +264,88 @@ function getMonitoredPagesForSubscriber(subscriberId) {
   return jsonData.monitored_pages.filter(p => p.subscriber_id === subscriberId);
 }
 
+function getCachedAnalysis(queryKey) {
+  const normalizedKey = (queryKey || '').toLowerCase().trim();
+  if (!normalizedKey) return null;
+
+  const now = Date.now();
+
+  if (sqliteDb) {
+    try {
+      const stmt = sqliteDb.prepare(`SELECT data_json, expires_at FROM analysis_cache WHERE query_key = ?`);
+      const row = stmt.get(normalizedKey);
+      if (row) {
+        if (row.expires_at > now) {
+          return JSON.parse(row.data_json);
+        } else {
+          // Expired, cleanup
+          sqliteDb.prepare(`DELETE FROM analysis_cache WHERE query_key = ?`).run(normalizedKey);
+        }
+      }
+    } catch (e) {
+      console.error('SQLite cache read error:', e);
+    }
+    return null;
+  }
+
+  if (!jsonData.analysis_cache) jsonData.analysis_cache = [];
+  const entry = jsonData.analysis_cache.find(e => e.query_key === normalizedKey);
+  if (entry) {
+    if (entry.expires_at > now) {
+      return entry.data;
+    } else {
+      jsonData.analysis_cache = jsonData.analysis_cache.filter(e => e.query_key !== normalizedKey);
+      persistJson();
+    }
+  }
+  return null;
+}
+
+function setCachedAnalysis(queryKey, data, ttlSeconds = 14400) {
+  const normalizedKey = (queryKey || '').toLowerCase().trim();
+  if (!normalizedKey || !data) return;
+
+  const expiresAt = Date.now() + (ttlSeconds * 1000);
+
+  if (sqliteDb) {
+    try {
+      const stmt = sqliteDb.prepare(`
+        INSERT INTO analysis_cache (query_key, data_json, expires_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(query_key) DO UPDATE SET
+          data_json = excluded.data_json,
+          expires_at = excluded.expires_at
+      `);
+      stmt.run(normalizedKey, JSON.stringify(data), expiresAt);
+    } catch (e) {
+      console.error('SQLite cache write error:', e);
+    }
+    return;
+  }
+
+  if (!jsonData.analysis_cache) jsonData.analysis_cache = [];
+  const existingIndex = jsonData.analysis_cache.findIndex(e => e.query_key === normalizedKey);
+  const cacheObj = {
+    query_key: normalizedKey,
+    data,
+    expires_at: expiresAt
+  };
+
+  if (existingIndex >= 0) {
+    jsonData.analysis_cache[existingIndex] = cacheObj;
+  } else {
+    jsonData.analysis_cache.push(cacheObj);
+  }
+  persistJson();
+}
+
 module.exports = {
   db: sqliteDb,
   saveSubscriber,
   getSubscriberByClerkIdOrEmail,
   saveAds,
   getAllSubscribers,
-  getMonitoredPagesForSubscriber
+  getMonitoredPagesForSubscriber,
+  getCachedAnalysis,
+  setCachedAnalysis
 };
