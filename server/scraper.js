@@ -14,18 +14,34 @@ function cleanPageQuery(input) {
 }
 
 /**
- * Convert concatenated handles (e.g. TheLittleGymMalaysia) to spaced words (The Little Gym Malaysia)
+ * Convert Facebook handle or URL into intelligent brand search candidates
  */
-function formatBrandQueryToPhrase(brandQuery) {
+function getSearchCandidates(brandQuery) {
   const cleaned = cleanPageQuery(brandQuery);
-  if (!cleaned) return '';
-  // If it's already spaced, return as is
-  if (cleaned.includes(' ') || cleaned.includes('-')) {
-    return cleaned.replace(/-/g, ' ');
+  if (!cleaned) return [];
+  
+  const candidates = new Set();
+
+  // If ends with common suffixes like Malaysia, MY, Official, HQ, Global, extract base
+  const strippedSuffix = cleaned.replace(/(malaysia|my|hq|official|global|international|store)$/i, '').trim();
+  if (strippedSuffix && strippedSuffix.length >= 2) {
+    candidates.add(strippedSuffix + ' Malaysia');
+    candidates.add(strippedSuffix);
   }
-  // Split camelCase or PascalCase into words
-  const spaced = cleaned.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
-  return spaced || cleaned;
+
+  // Spaced version handling camelCase / PascalCase while preserving acronyms (e.g., 20dB)
+  const spaced = cleaned
+    .replace(/([0-9]+dB)/ig, '$1 ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  if (spaced) {
+    candidates.add(spaced);
+  }
+  candidates.add(cleaned);
+
+  return [...candidates].filter(Boolean);
 }
 
 /**
@@ -44,7 +60,8 @@ const sampleMediaThumbnails = [
  */
 async function fetchMetaAdLibraryPublic(query) {
   return new Promise((resolve) => {
-    const searchPhrase = formatBrandQueryToPhrase(query);
+    const candidates = getSearchCandidates(query);
+    const searchPhrase = candidates[0] || query;
     const url = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(searchPhrase)}&search_type=keyword_exact_phrase`;
     
     const req = https.get(url, {
@@ -95,29 +112,32 @@ async function fetchApifyMetaScraper(query) {
   const token = process.env.APIFY_API_TOKEN;
   if (!token) return null;
 
-  const searchPhrase = formatBrandQueryToPhrase(query);
   const rawQuery = cleanPageQuery(query);
+  const candidates = getSearchCandidates(query);
+  const searchPhrase = candidates[0] || rawQuery;
+
+  // Send ONLY 1 exact target URL per scrape to prevent runaway parallel browser sessions
+  const targetUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(searchPhrase)}&search_type=keyword_exact_phrase`;
 
   return new Promise((resolve) => {
     const postData = JSON.stringify({
       urls: [
-        { url: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(searchPhrase)}&search_type=keyword_exact_phrase` }
+        { url: targetUrl }
       ],
       maxAds: 20,
       count: 20,
-      limit: 20,
-      maxItems: 20
+      limit: 20
     });
 
     const options = {
       hostname: 'api.apify.com',
-      path: `/v2/acts/curious_coder~facebook-ads-library-scraper/run-sync-get-dataset-items?token=${token}`,
+      path: `/v2/acts/curious_coder~facebook-ads-library-scraper/run-sync-get-dataset-items?timeout=30&token=${token}`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData)
       },
-      timeout: 60000
+      timeout: 35000
     };
 
     const req = https.request(options, (res) => {
@@ -127,15 +147,27 @@ async function fetchApifyMetaScraper(query) {
         try {
           const results = JSON.parse(body);
           if (Array.isArray(results) && results.length > 0) {
-            // Prioritize ads matching the target brand name or query
-            const normalizedTarget = searchPhrase.toLowerCase().replace(/\s+/g, '');
+            // Extract significant brand root words (excluding generic region/store words)
+            const candidateWords = candidates.flatMap(c => 
+              c.toLowerCase().split(/[\s\-_]+/).filter(w => w.length >= 2 && !['malaysia', 'my', 'official', 'hq', 'global', 'store', 'page'].includes(w))
+            );
+            const candidateKeys = candidates.map(c => c.toLowerCase().replace(/[\s\-_]+/g, ''));
+
             const matchingAds = results.filter(item => {
-              const pName = (item.page_name || item.snapshot?.page_name || '').toLowerCase().replace(/\s+/g, '');
-              return pName.includes(normalizedTarget) || normalizedTarget.includes(pName) || results.length <= 5;
+              const pName = (item.page_name || item.snapshot?.page_name || '').toLowerCase().replace(/[\s\-_]+/g, '');
+              if (!pName) return false;
+              // Matches if primary brand word is in page name (e.g. '20db' in '20dbhearing')
+              if (candidateWords.length > 0 && candidateWords.some(w => pName.includes(w))) return true;
+              return candidateKeys.some(k => pName.includes(k) || k.includes(pName));
             });
 
-            const candidateAds = matchingAds.length > 0 ? matchingAds : results;
-            const primaryPageName = candidateAds[0]?.page_name || candidateAds[0]?.snapshot?.page_name || searchPhrase;
+            if (matchingAds.length === 0) {
+              console.log(`No direct page matches found in ${results.length} scraped ads for candidates:`, candidates);
+              return resolve(null);
+            }
+
+            const candidateAds = matchingAds;
+            const primaryPageName = candidateAds[0]?.page_name || candidateAds[0]?.snapshot?.page_name || candidates[0] || rawQuery;
 
             const extractedAds = candidateAds.map((item, index) => {
               const snapshot = item.snapshot || {};
@@ -203,7 +235,7 @@ async function fetchApifyMetaScraper(query) {
               brandName: primaryPageName,
               query: rawQuery,
               metrics: {
-                activeAdsCount: results.length,
+                activeAdsCount: matchingAds.length > 0 ? matchingAds.length : results.length,
                 videoPercent: `${videoPercent}%`,
                 imagePercent: `${imagePercent}%`,
                 avgDaysActive: `${Math.floor(Math.random() * 12) + 14} days`,
@@ -244,7 +276,7 @@ async function fetchApifyMetaScraper(query) {
  */
 function generateSynthesizedAnalysis(brandQuery) {
   const cleanBrand = cleanPageQuery(brandQuery);
-  const formattedBrand = formatBrandQueryToPhrase(cleanBrand);
+  const formattedBrand = getSearchCandidates(cleanBrand)[0] || cleanBrand;
   
   const charSum = cleanBrand.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
   const activeAdsCount = (charSum % 18) + 8; 
@@ -372,7 +404,7 @@ async function scrapeCompetitor(inputQuery) {
 
 module.exports = {
   cleanPageQuery,
-  formatBrandQueryToPhrase,
+  getSearchCandidates,
   scrapeCompetitor
 };
 
