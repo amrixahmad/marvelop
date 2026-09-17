@@ -267,20 +267,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         const adsHtml = (r.ads || []).slice(0, 5).map((ad, adIdx) => {
           const isWinner = ad.isTopPerformer || adIdx === 0;
           const isVideo = ad.format === 'video';
+          const isCarousel = ad.format === 'carousel';
           const mediaThumbnail = ad.mediaUrl || "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=600&q=80";
           const libUrl = ad.adLibraryUrl || `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(r.brandName || r.query)}`;
+
+          let overlayBadge = `<span class="badge badge-tool" style="background: rgba(0,0,0,0.75); color: #fff;">📸 Image Creative</span>`;
+          if (isVideo) {
+            overlayBadge = `<span class="play-badge">▶ Play Video Creative</span>`;
+          } else if (isCarousel) {
+            overlayBadge = `<span class="badge badge-tool" style="background: rgba(168, 85, 247, 0.85); color: #fff;">🎠 Carousel Creative</span>`;
+          }
 
           return `
             <div class="ad-card">
               <div>
                 <div class="ad-media-container" style="background-image: url('${mediaThumbnail}');">
                   <div class="ad-media-overlay">
-                    ${isVideo ? `<span class="play-badge">▶ Play Video Creative</span>` : `<span class="badge badge-tool" style="background: rgba(0,0,0,0.7); color: #fff;">📸 Image Creative</span>`}
+                    ${overlayBadge}
                   </div>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                  <span class="ad-format-tag ${isVideo ? 'video' : ''}">${ad.format || 'image'}</span>
+                  <span class="ad-format-tag ${ad.format || 'image'}">${ad.format || 'image'}</span>
                   ${isWinner ? `<span class="badge badge-alert" style="font-size: 0.7rem;">🔥 45+ DAYS SCALED WINNER</span>` : `<span class="badge badge-tool" style="font-size: 0.7rem;">⚡ SAMPLE AD #${adIdx + 1}</span>`}
                 </div>
                 <div class="ad-copy">"${escapeHtml(ad.copy)}"</div>

@@ -233,9 +233,27 @@ async function fetchApifyMetaScraper(query) {
                              snapshot.page_profile_picture_url ||
                              sampleMediaThumbnails[index % sampleMediaThumbnails.length];
 
-              // Extract real ad copy
-              let copy = snapshot.body?.text || snapshot.title || snapshot.caption || `Active creative from ${primaryPageName}`;
-              copy = copy.trim().replace(/\n{3,}/g, '\n\n');
+              // Extract real ad copy and clean template tags (e.g. {{product.brand}})
+              let rawCopy = snapshot.body?.text || 
+                             snapshot.cards?.[0]?.body || 
+                             snapshot.title || 
+                             snapshot.cards?.[0]?.title || 
+                             snapshot.link_description || 
+                             snapshot.caption || 
+                             `Active creative from ${primaryPageName}`;
+
+              // Replace dynamic catalog template variables with resolved brand details
+              let copy = rawCopy
+                .replace(/\{\{\s*product\.brand\s*\}\}/gi, primaryPageName)
+                .replace(/\{\{\s*product\.name\s*\}\}/gi, 'Featured Offer / Products')
+                .replace(/\{\{\s*product\.description\s*\}\}/gi, '')
+                .replace(/\{\{[^}]+\}\}/g, '')
+                .trim()
+                .replace(/\n{3,}/g, '\n\n');
+
+              if (!copy || copy.length < 5) {
+                copy = `Active Meta campaign creative from ${primaryPageName}`;
+              }
 
               // Format dates
               let startDate = item.start_date_formatted ? item.start_date_formatted.split(' ')[0] : null;
@@ -266,12 +284,19 @@ async function fetchApifyMetaScraper(query) {
             const videoPercent = Math.round((videoCount / extractedAds.length) * 100);
             const imagePercent = 100 - videoPercent;
 
-            // Extract distinct hook openers from the genuine copy
+            // Extract distinct hook openers from the genuine copy (excluding templated placeholders)
             const allHooks = candidateAds
               .map(item => {
-                const text = item.snapshot?.body?.text || item.snapshot?.title || '';
+                let text = item.snapshot?.body?.text || item.snapshot?.title || '';
+                text = text
+                  .replace(/\{\{\s*product\.brand\s*\}\}/gi, primaryPageName)
+                  .replace(/\{\{\s*product\.name\s*\}\}/gi, 'Featured Offer')
+                  .replace(/\{\{[^}]+\}\}/g, '')
+                  .trim();
                 const firstSentence = text.split('\n')[0].replace(/^[^\w👶🔥🚀⚡]+/, '').trim();
-                return firstSentence ? `"${firstSentence.substring(0, 110)}${firstSentence.length > 110 ? '...' : ''}"` : null;
+                return (firstSentence && firstSentence.length >= 8 && !firstSentence.includes('{{')) 
+                  ? `"${firstSentence.substring(0, 110)}${firstSentence.length > 110 ? '...' : ''}"` 
+                  : null;
               })
               .filter(Boolean);
 
