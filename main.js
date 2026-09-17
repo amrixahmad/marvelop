@@ -25,6 +25,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // --- CLERK FRONTEND AUTH INTEGRATION ---
+  let isClerkInitialized = false;
+  let isUserButtonMounted = false;
+
   if (signInBtn) {
     signInBtn.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -55,17 +58,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  async function initClerk() {
+  async function updateAuthState() {
     if (!window.Clerk) return;
     try {
-      if (!window.Clerk.loaded) {
-        await window.Clerk.load();
-      }
-
       if (window.Clerk.user) {
         if (authButtons) authButtons.style.display = 'none';
-        if (userButtonNode) {
+        if (userButtonNode && !isUserButtonMounted) {
+          userButtonNode.innerHTML = '';
           window.Clerk.mountUserButton(userButtonNode);
+          isUserButtonMounted = true;
         }
 
         const emailInput = document.getElementById('userEmail');
@@ -80,7 +81,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         fetchUserSavedDashboard();
       } else {
         if (authButtons) authButtons.style.display = 'inline-block';
+        if (userButtonNode) {
+          userButtonNode.innerHTML = '';
+          isUserButtonMounted = false;
+        }
       }
+    } catch (err) {
+      console.error('Error updating Clerk auth state:', err);
+    }
+  }
+
+  async function initClerk() {
+    if (!window.Clerk || isClerkInitialized) return;
+    try {
+      if (!window.Clerk.loaded) {
+        await window.Clerk.load();
+      }
+      isClerkInitialized = true;
+
+      // Listen for future auth state changes
+      if (typeof window.Clerk.addListener === 'function') {
+        window.Clerk.addListener(() => {
+          updateAuthState();
+        });
+      }
+
+      await updateAuthState();
     } catch (err) {
       console.error('Clerk Initialization Error:', err);
     }
