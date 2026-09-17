@@ -2,18 +2,29 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 const { clerkMiddleware, getAuth } = require('@clerk/express');
 const { saveSubscriber, getSubscriberByClerkIdOrEmail, getMonitoredPagesForSubscriber, saveAds } = require('./db');
 const { scrapeCompetitor } = require('./scraper');
 const { sendWelcomeAlertConfirmation } = require('./resend');
 const { syncLeadToMailerLite } = require('./mailerlite');
+const { sanitizeAndDeduplicateCompetitors, validateEmail, validateName } = require('./validator');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
+
+// Rate limiter for analysis endpoint (20 requests per 15 mins per IP)
+const analyzeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 25,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many analysis requests from this IP. Please try again in 15 minutes.' }
+});
 
 // Apply Clerk Auth Middleware (falls back gracefully if running in local demo mode)
 const clerkPublishableKey = process.env.CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_dG91Y2hpbmctaG9yc2UtMzI5MS5jbGVyay5hY2NvdW50cy5kZXYk';
@@ -70,28 +81,39 @@ app.get('/api/me', async (req, res) => {
 });
 
 // Main Analysis & Monitoring Signup API Endpoint
-app.post('/api/analyze', async (req, res) => {
+app.post('/api/analyze', analyzeLimiter, async (req, res) => {
   try {
-    const auth = getAuth(req);
-    const userId = auth?.userId;
-    const { name, email, company, competitors, enableAlerts } = req.body;
-
-    if (!competitors || !Array.isArray(competitors) || competitors.filter(c => c && typeof c === 'string' && c.trim()).length === 0) {
-      return res.status(400).json({ error: 'Please provide at least one competitor Facebook Page URL or name.' });
+    // 1. Honeypot check: silently ignore automated bots
+    if (req.body.website) {
+      return res.json({
+        success: true,
+        subscriber: null,
+        monitoredCompetitors: [],
+        reports: [],
+        summary: { totalCompetitors: 0, totalActiveAdsAnalyzed: 0, primaryMarket: 'Malaysia (MY)', monitoringActive: false }
+      });
     }
 
-    const cleanCompetitors = competitors
-      .filter(c => typeof c === 'string' && c.trim().length > 0)
-      .map(c => c.replace(/[\r\n\t]+/g, ' ').trim().slice(0, 100))
-      .filter(c => c.length > 0 && !/(?:node:internal|SyntaxError|\[err\]|\[inf\]|npm warn|at Object\.)/i.test(c))
-      .slice(0, 3);
+    const auth = getAuth(req);
+    const userId = auth?.userId;
+    const { name, email, company, competitors } = req.body;
 
-    if (cleanCompetitors.length === 0) {
-      return res.status(400).json({ error: 'Please enter a valid competitor Facebook Page URL or brand name (e.g. facebook.com/TheLittleGymMalaysia or Nike).' });
+    if (!competitors || !Array.isArray(competitors) || competitors.length === 0) {
+      return res.status(400).json({ error: 'Please provide at least one competitor Facebook Page URL or Instagram profile link.' });
+    }
+
+    // 2. Validate, Clean, and Deduplicate Competitors
+    const { validCompetitors, errors } = sanitizeAndDeduplicateCompetitors(competitors);
+
+    if (validCompetitors.length === 0) {
+      const errorMsg = errors.length > 0 
+        ? errors[0] 
+        : 'Please enter a valid Facebook Page URL (e.g. facebook.com/TheLittleGymMalaysia) or Instagram profile link.';
+      return res.status(400).json({ error: errorMsg });
     }
 
     // Run Scraper Engine in parallel for all competitors (5 sample ads each)
-    const scrapingPromises = cleanCompetitors.map(c => 
+    const scrapingPromises = validCompetitors.map(c => 
       scrapeCompetitor(c).catch(err => {
         console.error(`Error scraping competitor [${c}]:`, err);
         return null;
@@ -111,15 +133,28 @@ app.post('/api/analyze', async (req, res) => {
 
     let subscriber = null;
 
-    // If user provided email or requested alert monitoring, register them in DB & send welcome email
-    if (email && email.includes('@')) {
-      subscriber = saveSubscriber(email, name || '', company || name || '', cleanCompetitors, userId);
+    // 3. If user provided email or requested alert monitoring, validate and register
+    if (email && typeof email === 'string' && email.trim().length > 0) {
+      const emailValidation = validateEmail(email);
+      if (!emailValidation.valid) {
+        return res.status(400).json({ error: emailValidation.error });
+      }
 
-      sendWelcomeAlertConfirmation(email, name, company, cleanCompetitors).catch(err => {
+      const nameValidation = validateName(name || company || 'Subscriber');
+      if (!nameValidation.valid) {
+        return res.status(400).json({ error: nameValidation.error });
+      }
+
+      const validEmail = emailValidation.email;
+      const validName = nameValidation.name;
+
+      subscriber = saveSubscriber(validEmail, validName, validName, validCompetitors, userId);
+
+      sendWelcomeAlertConfirmation(validEmail, validName, validName, validCompetitors).catch(err => {
         console.error('Resend background error:', err);
       });
 
-      syncLeadToMailerLite({ email, name, company }).catch(err => {
+      syncLeadToMailerLite({ email: validEmail, name: validName, company: validName }).catch(err => {
         console.error('MailerLite sync background error:', err);
       });
     }
@@ -127,7 +162,7 @@ app.post('/api/analyze', async (req, res) => {
     return res.json({
       success: true,
       subscriber,
-      monitoredCompetitors: cleanCompetitors,
+      monitoredCompetitors: validCompetitors,
       reports,
       summary: {
         totalCompetitors: reports.length,

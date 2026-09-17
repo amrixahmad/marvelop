@@ -114,14 +114,67 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      const isLogOrGarbage = (str) => {
-        if (!str) return false;
-        return str.length > 150 || /[\r\n]/.test(str) || /(?:node:internal|SyntaxError|\[err\]|\[inf\]|npm warn|at Object\.|Error:)/i.test(str);
+      const UNACCEPTABLE_DOMAINS = [
+        'tiktok.com', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com',
+        'linkedin.com', 'pinterest.com', 'reddit.com', 'snapchat.com',
+        'shopee.com', 'shopee.com.my', 'lazada.com', 'lazada.com.my',
+        'google.com', 'amazon.com', 'ebay.com', 'myshopify.com', 'shopify.com'
+      ];
+
+      const validateInputString = (str) => {
+        if (!str) return { valid: true };
+        const clean = str.replace(/[\r\n\t]+/g, ' ').trim();
+        
+        if (clean.length > 150 || /(?:node:internal|SyntaxError|\[err\]|\[inf\]|npm warn|at Object\.|Error:)/i.test(clean)) {
+          return { valid: false, error: 'Invalid input. Please provide a Facebook Page or Instagram profile link.' };
+        }
+
+        const lower = clean.toLowerCase();
+        for (const dom of UNACCEPTABLE_DOMAINS) {
+          if (lower.includes(dom)) {
+            return { valid: false, error: `Only Facebook Page or Instagram profile links are supported (found ${dom}).` };
+          }
+        }
+
+        if (/^https?:\/\//i.test(clean)) {
+          if (!/https?:\/\/(www\.|m\.|web\.|touch\.|l\.)?(facebook\.com|fb\.com|fb\.watch|instagram\.com)\//i.test(clean)) {
+            return { valid: false, error: 'Please enter a Facebook Page URL (e.g. facebook.com/brand) or Instagram profile link (e.g. instagram.com/brand).' };
+          }
+        }
+
+        if (clean.length < 2) {
+          return { valid: false, error: 'Competitor name or handle is too short (min 2 characters).' };
+        }
+
+        if (!/[a-zA-Z0-9]/.test(clean)) {
+          return { valid: false, error: 'Competitor name must contain alphanumeric characters.' };
+        }
+
+        return { valid: true, clean };
       };
 
-      if (isLogOrGarbage(comp1) || isLogOrGarbage(comp2) || isLogOrGarbage(comp3)) {
+      const v1 = validateInputString(comp1);
+      if (!v1.valid) {
         if (statusNode) {
-          statusNode.textContent = 'Please enter a valid Facebook Page URL or brand name (e.g. facebook.com/TheLittleGymMalaysia or Nike).';
+          statusNode.textContent = v1.error;
+          statusNode.classList.add('error');
+        }
+        return;
+      }
+
+      const v2 = validateInputString(comp2);
+      if (!v2.valid) {
+        if (statusNode) {
+          statusNode.textContent = v2.error;
+          statusNode.classList.add('error');
+        }
+        return;
+      }
+
+      const v3 = validateInputString(comp3);
+      if (!v3.valid) {
+        if (statusNode) {
+          statusNode.textContent = v3.error;
           statusNode.classList.add('error');
         }
         return;
@@ -191,10 +244,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         alertOptinStatus.className = 'form-status';
       }
 
-      const email = (document.getElementById('userEmail')?.value || '').trim();
+      const email = (document.getElementById('userEmail')?.value || '').trim().toLowerCase();
       const name = (document.getElementById('userName')?.value || '').trim();
 
-      if (!email || !email.includes('@')) {
+      const DISPOSABLE_EMAIL_DOMAINS = ['mailinator.com', '10minutemail.com', 'temp-mail.org', 'tempmail.com', 'guerrillamail.com', 'yopmail.com', 'trashmail.com'];
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!email || !emailRegex.test(email)) {
         if (alertOptinStatus) {
           alertOptinStatus.textContent = 'Please enter a valid work email address.';
           alertOptinStatus.classList.add('error');
@@ -202,9 +258,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      if (!name) {
+      const domain = email.split('@')[1] || '';
+      if (DISPOSABLE_EMAIL_DOMAINS.includes(domain)) {
         if (alertOptinStatus) {
-          alertOptinStatus.textContent = 'Please enter your name or company name.';
+          alertOptinStatus.textContent = 'Disposable email addresses are not supported. Please use a work or personal email.';
+          alertOptinStatus.classList.add('error');
+        }
+        return;
+      }
+
+      if (!name || name.length < 2) {
+        if (alertOptinStatus) {
+          alertOptinStatus.textContent = 'Please enter your name or company name (min 2 characters).';
+          alertOptinStatus.classList.add('error');
+        }
+        return;
+      }
+
+      if (/^https?:\/\//i.test(name) || name.includes('.com') || name.includes('.my')) {
+        if (alertOptinStatus) {
+          alertOptinStatus.textContent = 'Please enter a name or company, not a website URL.';
           alertOptinStatus.classList.add('error');
         }
         return;
