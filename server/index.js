@@ -136,9 +136,29 @@ app.post('/api/analyze', async (req, res) => {
   }
 });
 
-const { startDailyMonitoringCron } = require('./cron');
+const { startDailyMonitoringCron, runWeeklyDigestScan, runMonitoringScan } = require('./cron');
+
+// Manual/Webhook triggers for cron operations
+app.post('/api/cron/weekly-digest', async (req, res) => {
+  try {
+    const result = await runWeeklyDigestScan();
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/cron/daily-monitor', async (req, res) => {
+  try {
+    await runMonitoringScan();
+    return res.json({ success: true, message: 'Daily monitoring scan completed.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 Marvelop AdSpy server running on port ${PORT}`);
   startDailyMonitoringCron();
 });
+
