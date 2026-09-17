@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       currentCompetitors = [comp1, comp2, comp3].filter(c => c.length > 0);
 
       submitBtn.disabled = true;
-      if (btnText) btnText.textContent = 'Fetching 5 Sample Ads Per Competitor...';
+      if (btnText) btnText.textContent = 'Scanning Competitor Ads & Creative Hooks...';
       if (spinner) spinner.classList.remove('hidden');
 
       try {
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderDashboard(data);
 
         if (statusNode) {
-          statusNode.textContent = '✓ Showing 5 sample ads per competitor!';
+          statusNode.textContent = '✓ Live competitor ads & creative intelligence loaded!';
           statusNode.classList.add('success');
         }
 
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } finally {
         submitBtn.disabled = false;
-        if (btnText) btnText.textContent = 'Inspect 5 Sample Ads Per Competitor ⚡';
+        if (btnText) btnText.textContent = 'Scan Competitor Ads Now ⚡';
         if (spinner) spinner.classList.add('hidden');
       }
     });

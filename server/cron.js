@@ -23,11 +23,11 @@ async function runMonitoringScan() {
 
           const newAds = saveAds(result.brandName || page.page_name, result.ads);
           if (newAds && newAds.length > 0 && sub.email) {
-            console.log(🚨 [Daily Monitor] Found  new ads for ! Alerting ...);
+            console.log(`🚨 [Daily Monitor] Found ${newAds.length} new ads for ${page.page_name}! Alerting ${sub.email}...`);
             await sendCompetitorNewAdAlert(sub.email, result.brandName || page.page_name, newAds.length);
           }
         } catch (pageErr) {
-          console.error([Daily Monitor] Error checking page :, pageErr.message);
+          console.error(`[Daily Monitor] Error checking page ${page.page_name}:`, pageErr.message);
         }
       }
     }
