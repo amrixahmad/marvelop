@@ -30,7 +30,6 @@ marvelop/
 ├── index.html            # Main Dark Mode Threat Radar dashboard HTML & Clerk SDK
 ├── styles.css            # Dark mode design system, radar pulse animations, card grids, & media previews
 ├── main.js               # Frontend interactive logic, Clerk auth handlers, & DOM rendering
-├── thank-you.html        # Post-registration confirmation page
 ├── package.json          # Node.js dependencies & npm start scripts
 └── .env                  # Local environment configuration (ignored in git)
 ```
