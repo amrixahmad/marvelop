@@ -339,13 +339,34 @@ function setCachedAnalysis(queryKey, data, ttlSeconds = 14400) {
   persistJson();
 }
 
+function deleteCachedAnalysis(queryKey) {
+  const normalizedKey = (queryKey || '').toLowerCase().trim();
+  if (!normalizedKey) return;
+
+  if (sqliteDb) {
+    try {
+      sqliteDb.prepare(`DELETE FROM analysis_cache WHERE query_key = ?`).run(normalizedKey);
+    } catch (e) {
+      console.error('SQLite cache delete error:', e);
+    }
+    return;
+  }
+
+  if (jsonData.analysis_cache) {
+    jsonData.analysis_cache = jsonData.analysis_cache.filter(e => e.query_key !== normalizedKey);
+    persistJson();
+  }
+}
+
 module.exports = {
-  db: sqliteDb,
+  sqliteDb,
   saveSubscriber,
   getSubscriberByClerkIdOrEmail,
-  saveAds,
   getAllSubscribers,
+  saveAds,
   getMonitoredPagesForSubscriber,
   getCachedAnalysis,
-  setCachedAnalysis
+  setCachedAnalysis,
+  deleteCachedAnalysis
 };
+

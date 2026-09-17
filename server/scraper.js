@@ -229,8 +229,13 @@ async function fetchApifyMetaScraper(query) {
         try {
           const results = JSON.parse(body);
 
+          const hasNoAdsError = Array.isArray(results) && results.some(item => 
+            item.errorCode === 'ADS_NOT_FOUND' || 
+            (item.error && typeof item.error === 'string' && item.error.toLowerCase().includes('not found'))
+          );
+
           // Handle Verified Brand with 0 Active Ads (Do not fallback to mock ads!)
-          if (Array.isArray(results) && results.length === 0 && resolvedPageId) {
+          if ((Array.isArray(results) && results.length === 0 && resolvedPageId) || (hasNoAdsError && (resolvedPageId || resolvedTitle))) {
             const brandName = resolvedTitle || candidates[0] || rawQuery;
             return resolve({
               success: true,
@@ -253,15 +258,40 @@ async function fetchApifyMetaScraper(query) {
           }
 
           if (Array.isArray(results) && results.length > 0) {
+            // Filter out any error/status items from the dataset
+            const validAdItems = results.filter(item => !item.error && !item.errorCode && (item.page_id || item.snapshot || item.ad_archive_id || item.ad_id));
+
+            if (validAdItems.length === 0 && resolvedPageId) {
+              const brandName = resolvedTitle || candidates[0] || rawQuery;
+              return resolve({
+                success: true,
+                source: 'meta_verified_zero_ads',
+                hasActiveAds: false,
+                brandName,
+                query: rawQuery,
+                pageId: resolvedPageId,
+                metrics: {
+                  activeAdsCount: 0,
+                  videoPercent: '0%',
+                  imagePercent: '0%',
+                  avgDaysActive: '0 days',
+                  primaryCTA: 'None Active',
+                  primaryTargetMarket: 'Malaysia (MY)'
+                },
+                topHooks: [],
+                ads: []
+              });
+            }
+
             let matchingAds;
 
             if (resolvedPageId) {
               // Exact Page ID queries: keep all returned ads belonging to the target advertiser
-              matchingAds = results.filter(item => {
+              matchingAds = validAdItems.filter(item => {
                 const pId = String(item.page_id || item.snapshot?.page_id || '');
                 return !pId || pId === String(resolvedPageId);
               });
-              if (matchingAds.length === 0) matchingAds = results;
+              if (matchingAds.length === 0) matchingAds = validAdItems;
             } else {
               // Keyword fallback: Extract significant brand root words (excluding generic region/store words)
               const candidateWords = candidates.flatMap(c => 
@@ -269,7 +299,7 @@ async function fetchApifyMetaScraper(query) {
               );
               const candidateKeys = candidates.map(c => c.toLowerCase().replace(/[\s\-_]+/g, ''));
 
-              matchingAds = results.filter(item => {
+              matchingAds = validAdItems.filter(item => {
                 const pName = (item.page_name || item.snapshot?.page_name || '').toLowerCase().replace(/[\s\-_]+/g, '');
                 if (!pName) return false;
                 if (candidateWords.length > 0 && candidateWords.some(w => pName.includes(w))) return true;
@@ -278,7 +308,28 @@ async function fetchApifyMetaScraper(query) {
             }
 
             if (matchingAds.length === 0) {
-              console.log(`No direct page matches found in ${results.length} scraped ads for candidates:`, candidates);
+              if (resolvedPageId) {
+                const brandName = resolvedTitle || candidates[0] || rawQuery;
+                return resolve({
+                  success: true,
+                  source: 'meta_verified_zero_ads',
+                  hasActiveAds: false,
+                  brandName,
+                  query: rawQuery,
+                  pageId: resolvedPageId,
+                  metrics: {
+                    activeAdsCount: 0,
+                    videoPercent: '0%',
+                    imagePercent: '0%',
+                    avgDaysActive: '0 days',
+                    primaryCTA: 'None Active',
+                    primaryTargetMarket: 'Malaysia (MY)'
+                  },
+                  topHooks: [],
+                  ads: []
+                });
+              }
+              console.log(`No direct page matches found in ${validAdItems.length} scraped ads for candidates:`, candidates);
               return resolve(null);
             }
 
@@ -551,27 +602,33 @@ async function scrapeCompetitor(inputQuery) {
     return cached;
   }
 
-  // Try Tier 1: Direct Meta Public Fetch
-  const tier1Result = await fetchMetaAdLibraryPublic(query);
-  if (tier1Result && tier1Result.ads && tier1Result.ads.length > 0) {
+  // Tier 1: Apify Meta Scraper (High-precision live ad extraction & 0-ads detection)
+  if (process.env.APIFY_API_TOKEN) {
+    try {
+      const apifyResult = await fetchApifyMetaScraper(query);
+      if (apifyResult) {
+        setCachedAnalysis(query, apifyResult, 14400);
+        return apifyResult;
+      }
+    } catch (err) {
+      console.error(`Apify Scraper Error for [${query}]:`, err.message);
+    }
+  }
+
+  // Tier 2: Direct Meta Public Fetch
+  const tier2Result = await fetchMetaAdLibraryPublic(query);
+  if (tier2Result && tier2Result.ads && tier2Result.ads.length > 0) {
     const synth = generateSynthesizedAnalysis(query);
     const result = {
       ...synth,
       source: 'meta_direct',
       metrics: {
         ...synth.metrics,
-        activeAdsCount: Math.max(tier1Result.adCount, synth.metrics.activeAdsCount)
+        activeAdsCount: Math.max(tier2Result.adCount, synth.metrics.activeAdsCount)
       }
     };
     setCachedAnalysis(query, result, 14400);
     return result;
-  }
-
-  // Try Tier 2: Apify Scraper
-  const tier2Result = await fetchApifyMetaScraper(query);
-  if (tier2Result) {
-    setCachedAnalysis(query, tier2Result, 14400);
-    return tier2Result;
   }
 
   // Tier 3: Intelligent Engine Synthesizer (Fallback)
