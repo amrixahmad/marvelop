@@ -119,7 +119,7 @@ function resolveFacebookPageDetails(urlOrHandle) {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
       },
-      timeout: 5000
+      timeout: 6000
     }, (res) => {
       let data = '';
       res.on('data', c => data += c);
@@ -128,11 +128,14 @@ function resolveFacebookPageDetails(urlOrHandle) {
         const idMatches = data.match(/page_id=(\d+)/i) || 
                           data.match(/\"pageID\"\s*:\s*\"(\d+)\"/i) || 
                           data.match(/entity_id=(\d+)/i) ||
-                          data.match(/fb:\/\/page\/\?id=(\d+)/i);
+                          data.match(/fb:\/\/page\/\?id=(\d+)/i) ||
+                          data.match(/facebook\.com\/(\d{8,})/i) ||
+                          data.match(/profile\.php\?id=(\d+)/i);
         if (idMatches) pageId = idMatches[1];
 
         let title = null;
-        const titleMatch = data.match(/<a[^>]+class=\"_8r\"[^>]*>([^<]+)<\/a>/i) ||
+        const titleMatch = data.match(/title=[\x22\x27]([^\x22\x27<]+)[\x22\x27]/i) ||
+                           data.match(/<a[^>]+class=\"_8r\"[^>]*>([^<]+)<\/a>/i) ||
                            data.match(/<a[^>]+href=\"https:\/\/www\.facebook\.com\/[^>]+>([^<]+)<\/a>/i);
         if (titleMatch) title = titleMatch[1].trim();
 
@@ -159,8 +162,8 @@ async function fetchApifyMetaScraper(query) {
 
   let targetUrl;
   if (resolvedPageId) {
-    // If Page ID is resolved, directly query Facebook's dedicated view_all_page_id URL (100% precision)
-    targetUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=${resolvedPageId}`;
+    // If Page ID is resolved, query view_all_page_id with country=ALL for 100% precision
+    targetUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&view_all_page_id=${resolvedPageId}`;
     console.log(`🎯 Resolved Page ID for [${query}] -> ${resolvedPageId} (${resolvedTitle || 'Page'})`);
   } else {
     const searchPhrase = resolvedTitle || candidates[0] || rawQuery;
@@ -195,19 +198,29 @@ async function fetchApifyMetaScraper(query) {
         try {
           const results = JSON.parse(body);
           if (Array.isArray(results) && results.length > 0) {
-            // Extract significant brand root words (excluding generic region/store words)
-            const candidateWords = candidates.flatMap(c => 
-              c.toLowerCase().split(/[\s\-_]+/).filter(w => w.length >= 2 && !['malaysia', 'my', 'official', 'hq', 'global', 'store', 'page'].includes(w))
-            );
-            const candidateKeys = candidates.map(c => c.toLowerCase().replace(/[\s\-_]+/g, ''));
+            let matchingAds;
 
-            const matchingAds = results.filter(item => {
-              const pName = (item.page_name || item.snapshot?.page_name || '').toLowerCase().replace(/[\s\-_]+/g, '');
-              if (!pName) return false;
-              // Matches if primary brand word is in page name (e.g. '20db' in '20dbhearing')
-              if (candidateWords.length > 0 && candidateWords.some(w => pName.includes(w))) return true;
-              return candidateKeys.some(k => pName.includes(k) || k.includes(pName));
-            });
+            if (resolvedPageId) {
+              // Exact Page ID queries: keep all returned ads belonging to the target advertiser
+              matchingAds = results.filter(item => {
+                const pId = String(item.page_id || item.snapshot?.page_id || '');
+                return !pId || pId === String(resolvedPageId);
+              });
+              if (matchingAds.length === 0) matchingAds = results;
+            } else {
+              // Keyword fallback: Extract significant brand root words (excluding generic region/store words)
+              const candidateWords = candidates.flatMap(c => 
+                c.toLowerCase().split(/[\s\-_]+/).filter(w => w.length >= 2 && !['malaysia', 'my', 'official', 'hq', 'global', 'store', 'page'].includes(w))
+              );
+              const candidateKeys = candidates.map(c => c.toLowerCase().replace(/[\s\-_]+/g, ''));
+
+              matchingAds = results.filter(item => {
+                const pName = (item.page_name || item.snapshot?.page_name || '').toLowerCase().replace(/[\s\-_]+/g, '');
+                if (!pName) return false;
+                if (candidateWords.length > 0 && candidateWords.some(w => pName.includes(w))) return true;
+                return candidateKeys.some(k => pName.includes(k) || k.includes(pName));
+              });
+            }
 
             if (matchingAds.length === 0) {
               console.log(`No direct page matches found in ${results.length} scraped ads for candidates:`, candidates);
@@ -215,7 +228,7 @@ async function fetchApifyMetaScraper(query) {
             }
 
             const candidateAds = matchingAds;
-            const primaryPageName = candidateAds[0]?.page_name || candidateAds[0]?.snapshot?.page_name || candidates[0] || rawQuery;
+            const primaryPageName = resolvedTitle || candidateAds[0]?.page_name || candidateAds[0]?.snapshot?.page_name || candidates[0] || rawQuery;
 
             const extractedAds = candidateAds.map((item, index) => {
               const snapshot = item.snapshot || {};
