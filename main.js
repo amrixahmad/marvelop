@@ -355,9 +355,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (competitorsContainer) {
       competitorsContainer.innerHTML = reports.map((r, idx) => {
-        const directLibPageUrl = r.pageId 
+        const isNumericId = /^\d+$/.test(r.brandName || r.query);
+        const searchName = (!isNumericId && r.brandName) ? r.brandName : (r.brandName || r.query);
+        const directLibPageUrl = (r.pageId && !r.pageId.startsWith('1000'))
           ? `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&view_all_page_id=${r.pageId}`
-          : `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(r.brandName || r.query)}`;
+          : `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(searchName)}`;
 
         // Handle 0 Active Ads State
         if (r.hasActiveAds === false || !r.ads || r.ads.length === 0) {

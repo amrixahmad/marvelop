@@ -179,30 +179,34 @@ function resolveFacebookPageDetails(urlOrHandle) {
 /**
  * Tier 2: Apify Meta Ads Scraper (Exact Facebook Page & Keyword Extraction)
  */
-async function fetchApifyMetaScraper(query) {
+async function fetchApifyMetaScraper(query, pageDetails = null) {
   const token = process.env.APIFY_API_TOKEN;
   if (!token) return null;
 
   const rawQuery = cleanPageQuery(query);
   const candidates = getSearchCandidates(query);
 
-  // Auto-resolve Page ID and Title from Facebook Page URL
-  const pageDetails = await resolveFacebookPageDetails(query);
-  const resolvedPageId = pageDetails.pageId;
-  const resolvedTitle = pageDetails.title;
+  // Auto-resolve Page ID and Title from Facebook Page URL if not already provided
+  const details = pageDetails || (await resolveFacebookPageDetails(query));
+  const resolvedPageId = details.pageId;
+  const resolvedTitle = details.title;
+
+  // Personal profile IDs (starting with 1000...) are not accepted by view_all_page_id in Meta Ad Library
+  const isPersonalProfileId = resolvedPageId && (resolvedPageId.startsWith('1000') || resolvedPageId.length >= 15);
 
   const targetUrls = [];
-  if (resolvedPageId) {
+  if (resolvedPageId && !isPersonalProfileId) {
     targetUrls.push({ url: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&view_all_page_id=${resolvedPageId}` });
   }
+  
   if (resolvedTitle && resolvedTitle.length >= 2) {
     targetUrls.push({ url: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&q=${encodeURIComponent(resolvedTitle)}&search_type=keyword_exact_phrase` });
-  } else if (!resolvedPageId) {
+  } else if (!resolvedPageId || isPersonalProfileId) {
     const searchPhrase = candidates[0] || rawQuery;
     targetUrls.push({ url: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(searchPhrase)}&search_type=keyword_exact_phrase` });
   }
 
-  console.log(`🎯 Scraping Meta Ad Library for [${query}] -> ${resolvedTitle || 'Page'} (Targets: ${targetUrls.length})`);
+  console.log(`🎯 Scraping Meta Ad Library for [${query}] -> ${resolvedTitle || resolvedPageId || 'Page'} (Targets: ${targetUrls.length})`);
 
   return new Promise((resolve) => {
     const postData = JSON.stringify({
@@ -230,13 +234,20 @@ async function fetchApifyMetaScraper(query) {
         try {
           const results = JSON.parse(body);
 
-          const hasNoAdsError = Array.isArray(results) && results.some(item => 
+          if (!Array.isArray(results)) {
+            console.log('Apify returned non-array response:', body.slice(0, 200));
+            return resolve(null);
+          }
+
+          const validAdItems = results.filter(item => !item.error && !item.errorCode && (item.page_id || item.snapshot || item.ad_archive_id || item.ad_id));
+
+          const hasNoAdsError = results.some(item => 
             item.errorCode === 'ADS_NOT_FOUND' || 
             (item.error && typeof item.error === 'string' && item.error.toLowerCase().includes('not found'))
           );
 
-          // Handle Verified Brand with 0 Active Ads (Do not fallback to mock ads!)
-          if ((Array.isArray(results) && results.length === 0 && resolvedPageId) || (hasNoAdsError && (resolvedPageId || resolvedTitle))) {
+          // Handle Verified Brand with 0 Active Ads (only when no valid ads returned anywhere)
+          if (validAdItems.length === 0 && (results.length === 0 || hasNoAdsError) && (resolvedPageId || resolvedTitle)) {
             const brandName = resolvedTitle || candidates[0] || rawQuery;
             return resolve({
               success: true,
@@ -491,9 +502,11 @@ async function fetchApifyMetaScraper(query) {
 /**
  * Tier 3: Realistic Competitor Ad Intelligence Synthesizer (Fallback when APIs are unavailable)
  */
-function generateSynthesizedAnalysis(brandQuery) {
+function generateSynthesizedAnalysis(brandQuery, resolvedTitle = null) {
   const cleanBrand = cleanPageQuery(brandQuery);
-  const formattedBrand = getSearchCandidates(cleanBrand)[0] || cleanBrand;
+  const formattedBrand = (resolvedTitle && resolvedTitle.length >= 2) 
+    ? resolvedTitle 
+    : (getSearchCandidates(cleanBrand)[0] || cleanBrand);
   
   const charSum = cleanBrand.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
   const activeAdsCount = (charSum % 18) + 8; 
@@ -517,6 +530,8 @@ function generateSynthesizedAnalysis(brandQuery) {
     `Premium Brand Positioning Angle`
   ];
 
+  const librarySearchParam = encodeURIComponent(formattedBrand || cleanBrand);
+
   const ads = [
     {
       id: `ad_${charSum}_101`,
@@ -526,7 +541,7 @@ function generateSynthesizedAnalysis(brandQuery) {
       ctaText: 'Learn More',
       startDate: `${avgDaysActive + 20} days ago`,
       isTopPerformer: true,
-      adLibraryUrl: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(cleanBrand)}`
+      adLibraryUrl: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${librarySearchParam}`
     },
     {
       id: `ad_${charSum}_102`,
@@ -536,7 +551,7 @@ function generateSynthesizedAnalysis(brandQuery) {
       ctaText: 'Sign Up',
       startDate: `${avgDaysActive + 8} days ago`,
       isTopPerformer: true,
-      adLibraryUrl: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(cleanBrand)}`
+      adLibraryUrl: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${librarySearchParam}`
     },
     {
       id: `ad_${charSum}_103`,
@@ -546,7 +561,7 @@ function generateSynthesizedAnalysis(brandQuery) {
       ctaText: 'Get Offer',
       startDate: '5 days ago',
       isTopPerformer: false,
-      adLibraryUrl: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(cleanBrand)}`
+      adLibraryUrl: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${librarySearchParam}`
     },
     {
       id: `ad_${charSum}_104`,
@@ -556,7 +571,7 @@ function generateSynthesizedAnalysis(brandQuery) {
       ctaText: 'Contact Us',
       startDate: '3 days ago',
       isTopPerformer: false,
-      adLibraryUrl: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(cleanBrand)}`
+      adLibraryUrl: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${librarySearchParam}`
     },
     {
       id: `ad_${charSum}_105`,
@@ -566,7 +581,7 @@ function generateSynthesizedAnalysis(brandQuery) {
       ctaText: 'Apply Now',
       startDate: 'Yesterday',
       isTopPerformer: false,
-      adLibraryUrl: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${encodeURIComponent(cleanBrand)}`
+      adLibraryUrl: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&q=${librarySearchParam}`
     }
   ];
 
@@ -603,10 +618,14 @@ async function scrapeCompetitor(inputQuery) {
     return cached;
   }
 
+  // Pre-resolve Page details (Title & Page ID)
+  const pageDetails = await resolveFacebookPageDetails(inputQuery);
+  const resolvedTitle = pageDetails?.title;
+
   // Tier 1: Apify Meta Scraper (High-precision live ad extraction & 0-ads detection)
   if (process.env.APIFY_API_TOKEN) {
     try {
-      const apifyResult = await fetchApifyMetaScraper(query);
+      const apifyResult = await fetchApifyMetaScraper(inputQuery, pageDetails);
       if (apifyResult) {
         setCachedAnalysis(query, apifyResult, 14400);
         return apifyResult;
@@ -617,9 +636,10 @@ async function scrapeCompetitor(inputQuery) {
   }
 
   // Tier 2: Direct Meta Public Fetch
-  const tier2Result = await fetchMetaAdLibraryPublic(query);
+  const searchPhrase = resolvedTitle || query;
+  const tier2Result = await fetchMetaAdLibraryPublic(searchPhrase);
   if (tier2Result && tier2Result.ads && tier2Result.ads.length > 0) {
-    const synth = generateSynthesizedAnalysis(query);
+    const synth = generateSynthesizedAnalysis(query, resolvedTitle);
     const result = {
       ...synth,
       source: 'meta_direct',
@@ -633,7 +653,7 @@ async function scrapeCompetitor(inputQuery) {
   }
 
   // Tier 3: Intelligent Engine Synthesizer (Fallback)
-  const synthResult = generateSynthesizedAnalysis(query);
+  const synthResult = generateSynthesizedAnalysis(query, resolvedTitle);
   setCachedAnalysis(query, synthResult, 14400);
   return synthResult;
 }
